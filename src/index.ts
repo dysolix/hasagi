@@ -1079,7 +1079,7 @@ export class Client extends TypedEmitter<Hasagi.ClientEvents> {
      * Send a request to the League of Legends client. Authentication is automatically included and the base url is already set.
      */
     request<ResponseDataType = any, ResponseType = AxiosResponse<ResponseDataType, any>, BodyType = any>(config: AxiosRequestConfig<BodyType>) {
-        if(this.httpClient === null)
+        if (this.httpClient === null)
             throwNotConnectedError();
 
         return this.httpClient.request<ResponseDataType, ResponseType, BodyType>(config);
@@ -1088,7 +1088,7 @@ export class Client extends TypedEmitter<Hasagi.ClientEvents> {
 //#endregion
 
 //#region Data
-var DataStorage: Hasagi.Data.DataObject = {}
+var DataStorage: Hasagi.Data.DataStorage = {}
 
 function getData(patch: string, language: string) {
     if (!DataStorage[patch])
@@ -1137,15 +1137,15 @@ export const Data = {
         defaultPatch = patch;
     },
 
-    getDataObject(): Hasagi.Data.DataObject {
+    getDataObject(): Hasagi.Data.DataStorage {
         return DataStorage;
     },
-    loadData(data: Hasagi.Data.DataObject) {
+    loadData(data: Hasagi.Data.DataStorage) {
         DataStorage = data;
     },
 
     /**
-     * @param patch All data from before this patch will be deleted
+     * @param patch All data from BEFORE this patch will be deleted
      */
     deleteOldData(patch: string) {
         Object.keys(DataStorage).forEach(key => {
@@ -1153,59 +1153,173 @@ export const Data = {
                 return;
 
             delete DataStorage[key];
+            hasUpdated = true;
         })
     },
 
+    /**
+     * Indicates if there has been a change to the stored data object, which you get by calling Data.getDataObject()
+     */
     hasUpdated() {
         return hasUpdated;
     },
 
-    async getLatestPatch(region: Hasagi.ServerRegion): Promise<string> {
-        return await httpGet<string>(`https://ddragon.leagueoflegends.com/realms/${region}.json`, res => res.dd).catch(err => { throw new DataDownloadError("Unable to get latest patch.", err) });
+    async getLatestPatch(region: Hasagi.ServerRegion) {
+        let latest: string;
+        try {
+            latest = await httpGet<string>(`https://ddragon.leagueoflegends.com/realms/${region}.json`, res => res.dd);
+        } catch (err: any) {
+            throw new DataDownloadError("Unable to get latest patch.", err);
+        }
+
+        return latest;
     },
 
-    async getAllChampions({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.Champion[]> {
-        let champions = getData(patch, language)?.Champions;
-        if (champions)
-            return champions;
+    getAllChampions,
+    getChampion,
 
-        champions = await httpGet<Hasagi.Champion[]>(this.getDataDragonURL(patch, language, "championFull.json"), res => Object.values(res.data)).catch(err => { throw new DataDownloadError("Unable to load champions.", err) });
-        DataStorage[patch][language].Champions = champions;
-        hasUpdated = true;
+    getAllSummonerSpells,
+
+    getAllRunes,
+    getRune,
+    getRuneTree,
+    getRuneTreeByRune,
+
+    getAllQueues,
+    getQueue,
+    getQueuesByMap,
+
+    getAllMaps,
+    getMap,
+
+    getAllGameModes,
+
+    getAllGameTypes,
+}
+
+function getAllChampions(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.Champion[];
+function getAllChampions(options?: Hasagi.Data.Options): Promise<Hasagi.Champion[]>
+function getAllChampions(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const champions = getData(options.patch, options.language).Champions
+        if (champions === undefined)
+            throw new Error(`Champion data is not stored. (${options.patch}/${options.language})`);
+
         return champions;
-    },
-    async getChampion(identifier: string | number, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.Champion | null> {
-        const champions = await this.getAllChampions({ language, patch });
+    } else {
+        return httpGet<Hasagi.Champion[]>(Data.getDataDragonURL(options.patch, options.language, "championFull.json"), res => Object.values(res.data))
+            .then(champions => {
+                DataStorage[options!.patch!][options!.language!].Champions = champions;
+                hasUpdated = true;
+                return champions;
+            }, err => {
+                throw new DataDownloadError("Unable to load champions.", err)
+            })
+    }
+}
+
+function getChampion(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.Champion | null;
+function getChampion(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.Champion | null>;
+function getChampion(identifier: string | number, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const champions = getAllChampions({ ...options, fromStorage: true });
 
         if (!isNaN(identifier as any)) {
             return champions.find(champion => champion.key == identifier) ?? null;
         } else {
             return champions.find(champion => champion.id === identifier || champion.name === identifier) ?? null;
         }
-    },
+    } else {
+        return Data.getAllChampions(options).then(champions => {
+            if (!isNaN(identifier as any)) {
+                return champions.find(champion => champion.key == identifier) ?? null;
+            } else {
+                return champions.find(champion => champion.id === identifier || champion.name === identifier) ?? null;
+            }
+        })
+    }
+}
 
-    async getAllSummonerSpells({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()) {
-        let summonerSpells = getData(patch, language)?.SummonerSpells;
-        if (summonerSpells)
-            return summonerSpells;
+function getAllSummonerSpells(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.SummonerSpell[];
+function getAllSummonerSpells(options?: Hasagi.Data.Options): Promise<Hasagi.SummonerSpell[]>
+function getAllSummonerSpells(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
 
-        summonerSpells = await httpGet<Hasagi.SummonerSpell[]>(this.getDataDragonURL(patch, language, "summoner.json"), res => Object.values(res.data)).catch(err => { throw new DataDownloadError("Unable to load summoner spells.", err) });
-        DataStorage[patch][language].SummonerSpells = summonerSpells;
-        hasUpdated = true;
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const summonerSpells = getData(options.patch, options.language).SummonerSpells
+        if (summonerSpells === undefined)
+            throw new Error(`Summoner spell data is not stored. (${options.patch}/${options.language})`);
+
         return summonerSpells;
-    },
+    } else {
+        return httpGet<Hasagi.SummonerSpell[]>(Data.getDataDragonURL(options.patch, options.language, "summoner.json"), res => res.data)
+            .then(summonerSpells => {
+                DataStorage[options!.patch!][options!.language!].SummonerSpells = summonerSpells;
+                hasUpdated = true;
+                return summonerSpells;
+            }, err => {
+                throw new DataDownloadError("Unable to load summoner spells.", err)
+            })
+    }
+}
 
-    async getAllRunes({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()) {
-        let runes = getData(patch, language)?.Runes;
-        if (runes)
-            return runes;
+function getAllRunes(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.RuneTree[];
+function getAllRunes(options?: Hasagi.Data.Options): Promise<Hasagi.RuneTree[]>
+function getAllRunes(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
 
-        runes = await httpGet<Hasagi.RuneTree[]>(this.getDataDragonURL(patch, language, "runesReforged.json")).catch(err => { throw new DataDownloadError("Unable to load runes.", err) });
-        DataStorage[patch][language].Runes = runes;
-        hasUpdated = true;
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const runes = getData(options.patch, options.language).Runes
+        if (runes === undefined)
+            throw new Error(`Rune data is not stored. (${options.patch}/${options.language})`);
+
         return runes;
-    },
-    async getRune(identifier: number | string, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.Rune | null> {
+    } else {
+        return httpGet<Hasagi.RuneTree[]>(Data.getDataDragonURL(options.patch, options.language, "runesReforged.json"))
+            .then(runes => {
+                DataStorage[options!.patch!][options!.language!].Runes = runes;
+                hasUpdated = true;
+                return runes;
+            }, err => {
+                throw new DataDownloadError("Unable to load runes.", err)
+            })
+    }
+}
+
+/**
+ * @param identifier Name or id
+ */
+function getRune(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.Rune | null;
+function getRune(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.Rune | null>;
+function getRune(identifier: string | number, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const runes = getAllRunes({ ...options, fromStorage: true })
         var predicate: (rune: Hasagi.Rune) => boolean;
 
         if (!isNaN(identifier as any)) {
@@ -1214,7 +1328,7 @@ export const Data = {
             predicate = rune => rune.key == identifier || rune.name == identifier;
         }
 
-        for (const runeTree of await this.getAllRunes({ language, patch })) {
+        for (const runeTree of runes) {
             for (const runeSlot of runeTree.slots) {
                 let rune = runeSlot.runes.find(predicate);
                 if (rune !== undefined) return rune;
@@ -1222,8 +1336,42 @@ export const Data = {
         }
 
         return null;
-    },
-    async getRuneTree(identifier: number | string, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.RuneTree | null> {
+    } else {
+        return Data.getAllRunes(options).then(runes => {
+            var predicate: (rune: Hasagi.Rune) => boolean;
+
+            if (!isNaN(identifier as any)) {
+                predicate = rune => rune.id == identifier;
+            } else {
+                predicate = rune => rune.key == identifier || rune.name == identifier;
+            }
+
+            for (const runeTree of runes) {
+                for (const runeSlot of runeTree.slots) {
+                    let rune = runeSlot.runes.find(predicate);
+                    if (rune !== undefined) return rune;
+                }
+            }
+
+            return null;
+        })
+    }
+}
+
+/**
+ * @param identifier Name or id
+ */
+function getRuneTree(identifier: string | number, options: Hasagi.Data.Options): Promise<Hasagi.RuneTree | null>;
+function getRuneTree(identifier: string | number, options?: Hasagi.Data.Options & { fromStorage: true }): Hasagi.RuneTree | null;
+function getRuneTree(identifier: string | number, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.language = options.language ?? defaultLanguage;
+    options.patch = options.patch ?? getDefaultPatch();
+
+    if (options.fromStorage) {
+        const runes = getAllRunes({ ...options, fromStorage: true })
         var predicate: (runeTree: Hasagi.RuneTree) => boolean;
 
         if (!isNaN(identifier as any)) {
@@ -1232,18 +1380,44 @@ export const Data = {
             predicate = runeTree => runeTree.key == identifier || runeTree.name == identifier;
         }
 
-        return (await this.getAllRunes({ language, patch })).find(predicate) ?? null;
-    },
-    async getRuneTreeByRune(rune: Hasagi.Rune | string | number, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.RuneTree | null> {
+        return runes.find(predicate) ?? null;
+    } else {
+        return Data.getAllRunes(options).then(runes => {
+            var predicate: (runeTree: Hasagi.RuneTree) => boolean;
+
+            if (!isNaN(identifier as any)) {
+                predicate = runeTree => runeTree.id == identifier;
+            } else {
+                predicate = runeTree => runeTree.key == identifier || runeTree.name == identifier;
+            }
+
+            return runes.find(predicate) ?? null;
+        })
+    }
+}
+
+/**
+ * @param rune Hasagi.Rune, name or id
+ */
+function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.RuneTree | null;
+function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.Options): Promise<Hasagi.RuneTree | null>;
+function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
         if (typeof rune === "string" || typeof rune === "number") {
-            let r = await this.getRune(rune, { language, patch });
+            let r = getRune(rune, { ...options, fromStorage: true })
             if (r === null)
                 return null;
 
             rune = r;
         }
 
-        for (let runeTree of await this.getAllRunes({ language, patch })) {
+        for (let runeTree of getAllRunes({ ...options, fromStorage: true })) {
             for (let runeSlot of runeTree.slots) {
                 for (let r of runeSlot.runes) {
                     if (r.id === rune.id) {
@@ -1254,61 +1428,195 @@ export const Data = {
         }
 
         return null;
-    },
+    } else {
+        return Data.getAllRunes(options).then(async runes => {
+            if (typeof rune === "string" || typeof rune === "number") {
+                let r = await getRune(rune, options as Hasagi.Data.Options);
+                if (r === null)
+                    return null;
 
-    async getAllQueues({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()) {
-        let queues = getData(patch, language).Queues;
-        if (queues)
-            return queues;
+                rune = r;
+            }
 
-        queues = await httpGet<Hasagi.GameQueue[]>(this.getGameConstantsURL("queues.json"))
-        DataStorage[patch][language].Queues = queues;
-        hasUpdated = true;
-        return queues;
-    },
-    async getQueue(identifier: number, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.GameQueue | null> {
-        return (await this.getAllQueues({ language, patch })).find(q => q.queueId == identifier) ?? null;
-    },
-    async getQueuesByMap(map: string, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.GameQueue[]> {
-        return (await this.getAllQueues({ language, patch })).filter(q => q.map == map);
-    },
+            for (let runeTree of await getAllRunes(options as Hasagi.Data.Options)) {
+                for (let runeSlot of runeTree.slots) {
+                    for (let r of runeSlot.runes) {
+                        if (r.id === rune.id) {
+                            return runeTree;
+                        }
+                    }
+                }
+            }
 
-    async getAllMaps({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()) {
-        let maps = getData(patch, language).Maps;
-        if (maps)
-            return maps;
-
-        maps = await httpGet<Hasagi.GameMap[]>(this.getGameConstantsURL("maps.json"))
-        DataStorage[patch][language].Maps = maps;
-        hasUpdated = true;
-        return maps;
-    },
-    async getMap(identifier: string | number, { language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()): Promise<Hasagi.GameMap | null> {
-        return (await this.getAllMaps({ language, patch })).find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
-    },
-
-    async getAllGameModes({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()) {
-        let gameModes = getData(patch, language).GameModes;
-        if (gameModes)
-            return gameModes;
-
-        gameModes = await httpGet<Hasagi.GameMode[]>(this.getGameConstantsURL("gameModes.json"))
-        DataStorage[patch][language].GameModes = gameModes;
-        hasUpdated = true;
-        return gameModes;
-    },
-
-    async getAllGameTypes({ language = defaultLanguage, patch = getDefaultPatch() }: Hasagi.Data.Options = getDefaultOptions()) {
-        let gameTypes = getData(patch, language).GameTypes;
-        if (gameTypes)
-            return gameTypes;
-
-        gameTypes = await httpGet<Hasagi.GameType[]>(this.getGameConstantsURL("gameTypes.json"))
-        DataStorage[patch][language].GameTypes = gameTypes;
-        hasUpdated = true;
-        return gameTypes;
+            return null;
+        })
     }
 }
+
+function getAllQueues(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameQueue[];
+function getAllQueues(options?: Hasagi.Data.Options): Promise<Hasagi.GameQueue[]>
+function getAllQueues(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const queues = getData(options.patch, options.language).Queues;
+        if (queues === undefined)
+            throw new Error(`Queue data is not stored. (${options.patch}/${options.language})`);
+
+        return queues;
+    } else {
+        return httpGet<Hasagi.GameQueue[]>(Data.getDataDragonURL(options.patch, options.language, "runesReforged.json"))
+            .then(queues => {
+                DataStorage[options!.patch!][options!.language!].Queues = queues;
+                hasUpdated = true;
+                return queues;
+            }, err => {
+                throw new DataDownloadError("Unable to load queues.", err)
+            })
+    }
+}
+
+function getQueue(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameQueue | null
+function getQueue(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.GameQueue | null>
+function getQueue(identifier: string | number, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.language = options.language ?? defaultLanguage;
+    options.patch = options.patch ?? getDefaultPatch();
+
+    if (options.fromStorage) {
+        const queues = getAllQueues({ ...options, fromStorage: true })
+        return queues.find(queue => queue.queueId == identifier) ?? null;
+    } else {
+        return getAllQueues(options).then(queues => queues.find(queue => queue.queueId == identifier) ?? null);
+    }
+}
+
+function getQueuesByMap(name: string, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameQueue[]
+function getQueuesByMap(name: string, options?: Hasagi.Data.Options): Promise<Hasagi.GameQueue[]>
+function getQueuesByMap(name: string, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.language = options.language ?? defaultLanguage;
+    options.patch = options.patch ?? getDefaultPatch();
+
+    if (options.fromStorage) {
+        const queues = getAllQueues({ ...options, fromStorage: true })
+        return queues.filter(queue => queue.map === name);
+    } else {
+        return getAllQueues(options).then(queues => queues.filter(queue => queue.map === name));
+    }
+}
+
+function getAllMaps(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameMap[];
+function getAllMaps(options?: Hasagi.Data.Options): Promise<Hasagi.GameMap[]>
+function getAllMaps(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const maps = getData(options.patch, options.language).Maps;
+        if (maps === undefined)
+            throw new Error(`Map data is not stored. (${options.patch}/${options.language})`);
+
+        return maps;
+    } else {
+        return httpGet<Hasagi.GameMap[]>(Data.getDataDragonURL(options.patch, options.language, "maps.json"))
+            .then(maps => {
+                DataStorage[options!.patch!][options!.language!].Maps = maps;
+                hasUpdated = true;
+                return maps;
+            }, err => {
+                throw new DataDownloadError("Unable to load maps.", err)
+            })
+    }
+}
+
+/**
+ * @param identifier Name or id
+ */
+function getMap(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameMap | null;
+function getMap(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.GameMap | null>;
+function getMap(identifier: string | number, options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.language = options.language ?? defaultLanguage;
+    options.patch = options.patch ?? getDefaultPatch();
+
+    if (options.fromStorage) {
+        const maps = getAllMaps({ ...options, fromStorage: true })
+        return maps.find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
+    } else {
+        return getAllMaps(options).then(maps => {
+            return maps.find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
+        })
+    }
+}
+
+function getAllGameModes(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameMode[];
+function getAllGameModes(options?: Hasagi.Data.Options): Promise<Hasagi.GameMode[]>
+function getAllGameModes(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const gameModes = getData(options.patch, options.language).GameModes;
+        if (gameModes === undefined)
+            throw new Error(`Game mode data is not stored. (${options.patch}/${options.language})`);
+
+        return gameModes;
+    } else {
+        return httpGet<Hasagi.GameMode[]>(Data.getDataDragonURL(options.patch, options.language, "gameModes.json"))
+            .then(gameModes => {
+                DataStorage[options!.patch!][options!.language!].GameModes = gameModes;
+                hasUpdated = true;
+                return gameModes;
+            }, err => {
+                throw new DataDownloadError("Unable to load game modes.", err)
+            })
+    }
+}
+
+function getAllGameTypes(options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameType[];
+function getAllGameTypes(options?: Hasagi.Data.Options): Promise<Hasagi.GameType[]>
+function getAllGameTypes(options?: Hasagi.Data.Options) {
+    if (!options)
+        options = getDefaultOptions();
+
+    options.patch = options.patch ?? getDefaultPatch();
+    options.language = options.language ?? defaultLanguage;
+
+    if (options.fromStorage) {
+        const gameTypes = getData(options.patch, options.language).GameTypes;
+        if (gameTypes === undefined)
+            throw new Error(`Game type data is not stored. (${options.patch}/${options.language})`);
+
+        return gameTypes;
+    } else {
+        return httpGet<Hasagi.GameType[]>(Data.getDataDragonURL(options.patch, options.language, "gameTypes.json"))
+            .then(gameTypes => {
+                DataStorage[options!.patch!][options!.language!].GameTypes = gameTypes;
+                hasUpdated = true;
+                return gameTypes;
+            }, err => {
+                throw new DataDownloadError("Unable to load game types.", err)
+            })
+    }
+}
+
 //#endregion
 
 //#region Util

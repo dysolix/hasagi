@@ -9,7 +9,8 @@
     "ws": "^8.9.0"
   },
   "scripts": {
-    "build": "tsc & node scripts/postbuild.mjs"
+    "build": "tsc & node scripts/postbuild.mjs",
+    "link": "cd ./dist & npm link"
   },
   "repository": {
     "type": "git",

@@ -32,12 +32,13 @@ export default class RunePage {
     }
 
     /**
-     * @param primaryRuneTree Can only be undefined if Data.Runes are loaded
-     * @param secondaryRuneTree Can only be undefined if Data.Runes are loaded
+     * 
+     * @param primaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
+     * @param secondaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
      */
     public static async Create(name: string, runes: number[], primaryRuneTree?: Hasagi.RuneTree | number, secondaryRuneTree?: Hasagi.RuneTree | number) {
         if (primaryRuneTree === undefined) {
-            const primaryTreeId = await Data.getRuneTreeByRune(runes[0]).then(tree => tree?.id);
+            const primaryTreeId = await Data.getRuneTreeByRune(runes[0]).then(tree => tree?.id).catch();
             if (primaryRuneTree === undefined)
                 throw new Error(`Unable to fetch primaryStyleId for runes ${runes}.`);
 
@@ -45,7 +46,7 @@ export default class RunePage {
         }
 
         if (secondaryRuneTree === undefined) {
-            const secondaryTreeId = await Data.getRuneTreeByRune(runes[4]).then(tree => tree?.id);
+            const secondaryTreeId = await Data.getRuneTreeByRune(runes[4]).then(tree => tree?.id).catch();
             if (secondaryRuneTree === undefined)
                 throw new Error(`Unable to fetch subStyleId for runes ${runes}.`);
 

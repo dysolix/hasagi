@@ -2,10 +2,11 @@ declare namespace Hasagi {
     namespace Data {
         type Options = {
             language?: LanguageCode,
-            patch?: string
+            patch?: string,
+            fromStorage?: boolean
         }
 
-        type DataObject = {
+        type DataStorage = {
             [patch: string]:
             {
                 [language: string]: {
