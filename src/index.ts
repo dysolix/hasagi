@@ -1224,9 +1224,18 @@ function getAllChampions(options?: Hasagi.Data.Options) {
     }
 }
 
+function getChampion(identifier: string | number, champions: Hasagi.Champion[]): Hasagi.Champion | null;
 function getChampion(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.Champion | null;
 function getChampion(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.Champion | null>;
-function getChampion(identifier: string | number, options?: Hasagi.Data.Options) {
+function getChampion(identifier: string | number, options?: Hasagi.Data.Options | Hasagi.Champion[]) {
+    if (Array.isArray(options)) {
+        if (!isNaN(identifier as any)) {
+            return options.find(champion => champion.key == identifier) ?? null;
+        } else {
+            return options.find(champion => champion.id === identifier || champion.name === identifier) ?? null;
+        }
+    }
+
     if (!options)
         options = getDefaultOptions();
 
@@ -1309,9 +1318,30 @@ function getAllRunes(options?: Hasagi.Data.Options) {
 /**
  * @param identifier Name or id
  */
+function getRune(identifier: string | number, runes: Hasagi.RuneTree[]): Hasagi.Rune | null;
 function getRune(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.Rune | null;
 function getRune(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.Rune | null>;
-function getRune(identifier: string | number, options?: Hasagi.Data.Options) {
+function getRune(identifier: string | number, options?: Hasagi.Data.Options | Hasagi.RuneTree[]) {
+    if (Array.isArray(options)) {
+        const runes = options;
+        var predicate: (rune: Hasagi.Rune) => boolean;
+
+        if (!isNaN(identifier as any)) {
+            predicate = rune => rune.id == identifier;
+        } else {
+            predicate = rune => rune.key == identifier || rune.name == identifier;
+        }
+
+        for (const runeTree of runes) {
+            for (const runeSlot of runeTree.slots) {
+                let rune = runeSlot.runes.find(predicate);
+                if (rune !== undefined) return rune;
+            }
+        }
+
+        return null;
+    }
+
     if (!options)
         options = getDefaultOptions();
 
@@ -1361,9 +1391,23 @@ function getRune(identifier: string | number, options?: Hasagi.Data.Options) {
 /**
  * @param identifier Name or id
  */
-function getRuneTree(identifier: string | number, options: Hasagi.Data.Options): Promise<Hasagi.RuneTree | null>;
+function getRuneTree(identifier: string | number, runes: Hasagi.RuneTree[]): Hasagi.RuneTree | null;
 function getRuneTree(identifier: string | number, options?: Hasagi.Data.Options & { fromStorage: true }): Hasagi.RuneTree | null;
-function getRuneTree(identifier: string | number, options?: Hasagi.Data.Options) {
+function getRuneTree(identifier: string | number, options: Hasagi.Data.Options): Promise<Hasagi.RuneTree | null>;
+function getRuneTree(identifier: string | number, options?: Hasagi.Data.Options | Hasagi.RuneTree[]) {
+    if (Array.isArray(options)) {
+        const runes = options;
+        var predicate: (runeTree: Hasagi.RuneTree) => boolean;
+
+        if (!isNaN(identifier as any)) {
+            predicate = runeTree => runeTree.id == identifier;
+        } else {
+            predicate = runeTree => runeTree.key == identifier || runeTree.name == identifier;
+        }
+
+        return runes.find(predicate) ?? null;
+    }
+
     if (!options)
         options = getDefaultOptions();
 
@@ -1399,9 +1443,32 @@ function getRuneTree(identifier: string | number, options?: Hasagi.Data.Options)
 /**
  * @param rune Hasagi.Rune, name or id
  */
+function getRuneTreeByRune(rune: Hasagi.Rune | string | number, runes: Hasagi.RuneTree[]): Hasagi.RuneTree | null;
 function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.RuneTree | null;
 function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.Options): Promise<Hasagi.RuneTree | null>;
-function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.Options) {
+function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.Options | Hasagi.RuneTree[]) {
+    if (Array.isArray(options)) {
+        if (typeof rune === "string" || typeof rune === "number") {
+            let r = getRune(rune, options)
+            if (r === null)
+                return null;
+
+            rune = r;
+        }
+
+        for (let runeTree of getAllRunes({ ...options, fromStorage: true })) {
+            for (let runeSlot of runeTree.slots) {
+                for (let r of runeSlot.runes) {
+                    if (r.id === rune.id) {
+                        return runeTree;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     if (!options)
         options = getDefaultOptions();
 
@@ -1480,9 +1547,14 @@ function getAllQueues(options?: Hasagi.Data.Options) {
     }
 }
 
+function getQueue(identifier: string | number, queues: Hasagi.GameQueue[]): Hasagi.GameQueue | null
 function getQueue(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameQueue | null
 function getQueue(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.GameQueue | null>
-function getQueue(identifier: string | number, options?: Hasagi.Data.Options) {
+function getQueue(identifier: string | number, options?: Hasagi.Data.Options | Hasagi.GameQueue[]) {
+    if (Array.isArray(options)) {
+        return options.find(queue => queue.queueId == identifier) ?? null;
+    }
+
     if (!options)
         options = getDefaultOptions();
 
@@ -1497,9 +1569,13 @@ function getQueue(identifier: string | number, options?: Hasagi.Data.Options) {
     }
 }
 
+function getQueuesByMap(name: string, queues: Hasagi.GameQueue[]): Hasagi.GameQueue[]
 function getQueuesByMap(name: string, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameQueue[]
 function getQueuesByMap(name: string, options?: Hasagi.Data.Options): Promise<Hasagi.GameQueue[]>
-function getQueuesByMap(name: string, options?: Hasagi.Data.Options) {
+function getQueuesByMap(name: string, options?: Hasagi.Data.Options | Hasagi.GameQueue[]) {
+    if (Array.isArray(options)) {
+        return options.filter(queue => queue.map === name);
+    }
     if (!options)
         options = getDefaultOptions();
 
@@ -1544,9 +1620,14 @@ function getAllMaps(options?: Hasagi.Data.Options) {
 /**
  * @param identifier Name or id
  */
+function getMap(identifier: string | number, maps: Hasagi.GameMap[]): Hasagi.GameMap | null;
 function getMap(identifier: string | number, options: Hasagi.Data.Options & { fromStorage: true }): Hasagi.GameMap | null;
 function getMap(identifier: string | number, options?: Hasagi.Data.Options): Promise<Hasagi.GameMap | null>;
-function getMap(identifier: string | number, options?: Hasagi.Data.Options) {
+function getMap(identifier: string | number, options?: Hasagi.Data.Options | Hasagi.GameMap[]) {
+    if(Array.isArray(options)){
+        return options.find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
+    }
+
     if (!options)
         options = getDefaultOptions();
 
