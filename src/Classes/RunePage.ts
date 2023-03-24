@@ -1,4 +1,4 @@
-import { Data, Client } from "../index.js";
+import { Client, Data } from "../index.js";
 
 export default class RunePage {
     autoModifiedSelections: any[];
@@ -37,9 +37,10 @@ export default class RunePage {
      * @param secondaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
      */
     public static async Create(name: string, runes: number[], primaryRuneTree?: Hasagi.RuneTree | number, secondaryRuneTree?: Hasagi.RuneTree | number) {
+        console.log({ name, runes, primaryRuneTree, secondaryRuneTree })
         if (primaryRuneTree === undefined) {
             const primaryTreeId = await Data.getRuneTreeByRune(runes[0]).then(tree => tree?.id).catch();
-            if (primaryRuneTree === undefined)
+            if (primaryTreeId === undefined)
                 throw new Error(`Unable to fetch primaryStyleId for runes ${runes}.`);
 
             primaryRuneTree = primaryTreeId;
@@ -47,7 +48,7 @@ export default class RunePage {
 
         if (secondaryRuneTree === undefined) {
             const secondaryTreeId = await Data.getRuneTreeByRune(runes[4]).then(tree => tree?.id).catch();
-            if (secondaryRuneTree === undefined)
+            if (secondaryTreeId === undefined)
                 throw new Error(`Unable to fetch subStyleId for runes ${runes}.`);
 
             secondaryRuneTree = secondaryTreeId;
@@ -56,7 +57,7 @@ export default class RunePage {
         return new RunePage({
             name: name,
             selectedPerkIds: runes,
-            primaryStyleId: typeof secondaryRuneTree === "number" ? secondaryRuneTree : secondaryRuneTree?.id,
+            primaryStyleId: typeof primaryRuneTree === "number" ? primaryRuneTree : primaryRuneTree?.id,
             subStyleId: typeof secondaryRuneTree === "number" ? secondaryRuneTree : secondaryRuneTree?.id,
         });
     }
