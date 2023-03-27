@@ -17,10 +17,11 @@
     "type": "git",
     "url": "git+https://github.com/dysolix/hasagi.git"
   },
-  "author": "dysolix",
+  "author": "dysolix <contact@dysolix.dev>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/dysolix/hasagi/issues"
+    "url": "https://github.com/dysolix/hasagi/issues",
+    "email": "hasagi@dysolix.dev"
   },
   "homepage": "https://github.com/dysolix/hasagi#readme",
   "devDependencies": {
