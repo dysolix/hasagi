@@ -1,11 +1,12 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { Agent } from "https";
 import { TypedEmitter } from "tiny-typed-emitter";
 import ChampSelectSession from "./Classes/ChampSelectSession.js";
 import RunePage from "./Classes/RunePage.js";
 import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
+const find = await import("find-process");
 
 export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     static Instance: Client | null = null;
@@ -13,7 +14,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     public isConnected: boolean = false;
 
     public port: number | null = null;
-    public authToken: string | null = null;
+    public basicAuthToken: string | null = null;
 
     private webSocket: WebSocket | null = null;
     private httpClient: AxiosInstance | null = null;
@@ -43,8 +44,6 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
         this.autoReconnect = autoReconnect;
         Client.Instance = this;
-
-        (window as any).axios = axios;
     }
 
     //#region Connection
@@ -56,23 +55,26 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
         this.webSocket = null;
         this.port = null;
-        this.authToken = null;
+        this.basicAuthToken = null;
         this.httpClient = null;
 
         await new Promise(
             (resolve, reject) => {
-                const child = exec('wmic PROCESS WHERE name=\'LeagueClientUx.exe\' GET commandline', (error, stdout, stderr) => {
-                    let portArr = stdout.match("--app-port=([0-9]*)");
-                    let passArr = stdout.match("--remoting-auth-token=([\\w-]*)");
+                find("name", "LeagueClientUx.exe").then(res => {
+                    const process = res[0];
+                    if(!process)
+                        reject();
 
-                    child.kill();
+                    const args = process.cmd;
+                    let portArr = args.match("--app-port=([0-9]*)");
+                    let passArr = args.match("--remoting-auth-token=([\\w-]*)");
 
                     if (portArr !== null && passArr !== null && (portArr?.length ?? 0) === 2 && (passArr?.length ?? 0) === 2) {
                         resolve({ port: Number(portArr[1]), authToken: String(passArr[1]) });
                     } else {
                         reject();
                     }
-                });
+                })
             }
         ).then((data: any) => {
             let port = data.port;
@@ -83,7 +85,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             ws.onopen = (ev: any) => {
                 this.webSocket = ws;
                 this.port = port;
-                this.authToken = authToken;
+                this.basicAuthToken = authToken;
 
                 this.httpClient = axios.create({
                     baseURL: "https://127.0.0.1:" + port,
@@ -103,9 +105,10 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                             this.emit("rune-pages-updated");
                         }),
                         this.getGameflowSession().then(gameflowSession => {
+                            const oldGameflowSession = this.gameflowSession;
                             this.gameflowSession = gameflowSession
-                            this.emit("gameflow-session-update")
-                        }).catch() // Throws expected exception if gameFlowSession is not yet initialized in the League of Legends client.
+                            this.emit("gameflow-session-update", oldGameflowSession, this.gameflowSession)
+                        }, err => { }) // Throws expected exception if gameFlowSession is not yet initialized in the League of Legends client.
                     ]);
 
                     this.subscribeEvent("OnJsonApiEvent");
@@ -203,7 +206,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
         if (this.httpClient === null)
             throwNotConnectedError();
 
-        return await this.LCUEndpoints.Gameflow.Session.get();
+        return this.LCUEndpoints.Gameflow.Session.get();
     }
 
     //#region Ready Check
@@ -420,7 +423,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
     async getLiveClientPlayerScore(summonerName: string): Promise<Hasagi.LiveClientScore | null> {
         try {
-            return await this.liveClientDataHttpClient.get("/liveclientdata/playerscores?summonerName=" + summonerName).then(res => res.data)
+            return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playerscores?summonerName=" + summonerName)).then(res => res.data)
         } catch {
             // NOT INGAME
             return null;
@@ -429,7 +432,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
     async getLiveClientPlayerSummonerSpells(summonerName: string): Promise<Hasagi.LiveClientSummonerSpells | null> {
         try {
-            return await this.liveClientDataHttpClient.get("/liveclientdata/playersummonerspells?summonerName=" + summonerName).then(res => res.data)
+            return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playersummonerspells?summonerName=" + summonerName)).then(res => res.data)
         } catch {
             // NOT INGAME
             return null;
@@ -438,7 +441,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
     async getLiveClientPlayerMainRunes(summonerName: string): Promise<Hasagi.LiveClientMainRunes | null> {
         try {
-            return await this.liveClientDataHttpClient.get("/liveclientdata/playermainrunes?summonerName=" + summonerName).then(res => res.data)
+            return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playermainrunes?summonerName=" + summonerName)).then(res => res.data)
         } catch {
             // NOT INGAME
             return null;
@@ -447,7 +450,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
     async getLiveClientPlayerItems(summonerName: string): Promise<Hasagi.LiveClientPlayerItem[] | null> {
         try {
-            return await this.liveClientDataHttpClient.get("/liveclientdata/playeritems?summonerName=" + summonerName).then(res => res.data)
+            return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playeritems?summonerName=" + summonerName)).then(res => res.data)
         } catch {
             // NOT INGAME
             return null;
@@ -552,10 +555,11 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                 let currentPhase = data.phase ?? "None";
                 if (previousPhase !== currentPhase)
                     this.emit("gameflow-session-phase-update", previousPhase, currentPhase);
+                const oldGameflowSession = this.gameflowSession;
                 this.gameflowSession = data;
                 this.currentQueue = this.gameflowSession?.gameData.queue ?? null;
                 this.currentMapId = this.gameflowSession?.map.id ?? null;
-                this.emit("gameflow-session-update");
+                this.emit("gameflow-session-update", oldGameflowSession, this.gameflowSession);
                 break;
             }
         }
@@ -1056,6 +1060,15 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                         throwNotConnectedError();
 
                     return await Client.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.Summoner);
+                },
+                Icon: {
+                    path: "/lol-summoner/v1/current-summoner/icon",
+                    async put(profileIconId: number | string) {
+                        if (Client.Instance!.httpClient === null)
+                            throwNotConnectedError();
+
+                        return await Client.Instance!.httpClient.put(this.path, { profileIconId });
+                    }
                 }
             },
             Summoners: {
@@ -1156,7 +1169,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     request<ResponseDataType = any, ResponseType = AxiosResponse<ResponseDataType, any>, BodyType = any>(config: AxiosRequestConfig<BodyType>) {
         if (this.httpClient === null)
             throwNotConnectedError();
-
+            
         return this.httpClient.request<ResponseDataType, ResponseType, BodyType>(config);
     }
 }

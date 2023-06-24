@@ -1,20 +1,18 @@
 import Data from "./data.js";
-import Client from "./client.js";
-import * as Constants from "./constants.js";
+import HasagiClient from "./client.js";
+import RunePage from "./Classes/RunePage";
+import ChampSelectSession from "./Classes/ChampSelectSession";
+import * as Constants from "./constants.js"
 
-const Util = {
-    ...Constants
-}
-
-export { Client, Data, Util }
+export default HasagiClient;
+export { HasagiClient, Data, RunePage, ChampSelectSession, Constants }
 
 declare global {
     namespace Hasagi {
         namespace Data {
-            type Options = {
+            type LoadOptions = {
                 language?: LanguageCode,
-                patch?: string,
-                fromStorage?: boolean
+                patch?: string
             }
 
             type DataStorage = {
@@ -42,9 +40,15 @@ declare global {
             "champ-select-local-player-pick": () => void;
             "champ-select-local-player-pick-completed": (championKey: string) => void;
             "rune-pages-updated": () => void;
-            "gameflow-session-update": () => void;
+            "gameflow-session-update": (oldSessionData: Hasagi.GameFlowSession | null, newSessionData: Hasagi.GameFlowSession | null) => void;
             "gameflow-session-phase-update": (prevPhase: Hasagi.GameFlowPhase, newPhase: Hasagi.GameFlowPhase) => void;
             "champ-select-champion-intent-change": (summonerId: number, previousChampionIntent: number, championIntent: number) => void;
+            /**
+             * 
+             * @param order 187
+             * @returns 
+             */
+            "champ-select-summoner-order-change": (order: string[]) => void;
         }
 
 
@@ -874,6 +878,26 @@ declare global {
                 itemId: number
             };
             EMOTES_WHEEL_CENTER: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_LOWER_LEFT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_LOWER_RIGHT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_UPPER_LEFT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_UPPER_RIGHT: {
                 contentId: string,
                 inventoryType: "EMOTE",
                 itemId: number

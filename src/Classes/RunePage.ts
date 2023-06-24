@@ -1,4 +1,4 @@
-import { Client, Data } from "../index.js";
+import { HasagiClient, Data } from "../index.js";
 
 export default class RunePage {
     autoModifiedSelections: any[];
@@ -67,14 +67,14 @@ export default class RunePage {
      */
     update() {
         if (this.existsInClient())
-            Client.Instance!.replaceRunePage(this.id, this);
+            HasagiClient.Instance!.replaceRunePage(this.id, this);
     }
 
     /**
      * @returns true, if a rune page with the same id exists in the client
      */
     existsInClient() {
-        return Client.Instance?.runePages.some(rp => rp.id === this.id) ?? false;
+        return HasagiClient.Instance?.runePages.some(rp => rp.id === this.id) ?? false;
     }
 }
 

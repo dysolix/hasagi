@@ -2,7 +2,6 @@ export default class ChampSelectSession implements Hasagi.IChampSelectSession {
     ownBanActionId: number;
     ownPickActionId: number;
     inProgressActionIds: number[];
-
     actions: Hasagi.ChampSelectAction[][];
     allowBattleBoost: boolean;
     allowDuplicatePicks: boolean;
