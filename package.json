@@ -1,7 +1,7 @@
 {
   "name": "@dysolix/hasagi",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "A library that helps you interact with the League Client API (LCU)",
   "dependencies": {
     "axios": "^1.2.1",
@@ -32,7 +32,6 @@
     "ts-node": "^10.9.1"
   },
   "exports": {
-    ".": "./index.js",
-    "./Classes/*": "./Classes/*.js"
+    ".": "./index.js"
   }
 }

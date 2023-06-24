@@ -6,3 +6,5 @@ Hasagi Library Changelog
 (0.1.6) Added url encoding; Readded constants
 (0.1.7) Changed type definitions to be compatible with the new emote wheel; Removed assignment of axios to the global window object
 (0.1.8) Maybe fixed uncaught promise idk
+(0.2.2) Removed top-level await
+(0.2.3) Removed classes directory from exports field in package.json

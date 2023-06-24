@@ -6,7 +6,7 @@ import ChampSelectSession from "./Classes/ChampSelectSession.js";
 import RunePage from "./Classes/RunePage.js";
 import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
-const find = await import("find-process");
+import find from "find-process";
 
 export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     static Instance: Client | null = null;

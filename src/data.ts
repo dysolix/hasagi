@@ -460,4 +460,4 @@ async function loadAllGameTypes(options?: Hasagi.Data.LoadOptions, data?: Hasagi
     DataStorage[patch][language].GameTypes = gameTypes;
 }
 
-await Data.getLatestPatch("euw").then(latest => Data.setDefaultPatch(latest), err => { });
+Data.getLatestPatch("euw").then(latest => Data.setDefaultPatch(latest), err => { });
