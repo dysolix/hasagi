@@ -114,6 +114,10 @@ const Data = {
 
 export default Data;
 
+/**
+ * Gets all champions
+ * @throws {Error} if champion data was not loaded for the specified patch and language
+ */
 function getAllChampions(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
@@ -145,6 +149,10 @@ async function loadAllChampions(options: Hasagi.Data.LoadOptions = {}, data?: Ha
 
     DataStorage[patch][language].Champions = champions;
 }
+/**
+ * @param identifier Can be the name, key or id
+ * @throws {Error} if champion data was not loaded for the specified patch and language
+ */
 function getChampion(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
     const champions = getAllChampions(options);
 
@@ -155,6 +163,10 @@ function getChampion(identifier: string | number, options?: Hasagi.Data.LoadOpti
     }
 }
 
+/**
+ * Gets all summoner spells
+ * @throws {Error} if summoner spell data was not loaded for the specified patch and language
+ */
 function getAllSummonerSpells(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
@@ -186,6 +198,10 @@ async function loadAllSummonerSpells(options?: Hasagi.Data.LoadOptions, data?: H
     DataStorage[patch][language].SummonerSpells = summonerSpells;
 }
 
+/**
+ * Gets all runes
+ * @throws {Error} if rune data was not loaded for the specified patch and language
+ */
 function getAllRunes(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
@@ -218,6 +234,7 @@ async function loadAllRunes(options?: Hasagi.Data.LoadOptions, data?: Hasagi.Run
 }
 /**
  * @param identifier Name or id
+ * @throws {Error} if rune data was not loaded for the specified patch and language
  */
 function getRune(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
     const runes = getAllRunes(options);
@@ -239,7 +256,8 @@ function getRune(identifier: string | number, options?: Hasagi.Data.LoadOptions)
     return null;
 }
 /**
- * @param identifier Name or id
+ * @param identifier Name, id or key
+ * @throws {Error} if rune data was not loaded for the specified patch and language
  */
 function getRuneTree(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
     const runes = getAllRunes(options)
@@ -254,7 +272,8 @@ function getRuneTree(identifier: string | number, options?: Hasagi.Data.LoadOpti
     return runes.find(predicate) ?? null;
 }
 /**
- * @param rune Hasagi.Rune, name or id
+ * @param rune Hasagi.Rune, name, id or key
+ * @throws {Error} if rune data was not loaded for the specified patch and language
  */
 function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.LoadOptions) {
     if (typeof rune === "string" || typeof rune === "number") {
@@ -278,6 +297,10 @@ function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi
     return null;
 }
 
+/**
+ * Gets all queues
+ * @throws {Error} if queue data was not loaded for the specified patch and language
+ */
 function getAllQueues(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
@@ -308,15 +331,27 @@ async function loadAllQueues(options?: Hasagi.Data.LoadOptions, data?: Hasagi.Ga
 
     DataStorage[patch][language].Queues = queues;
 }
+/**
+ * @param identifier The queue's id
+ * @throws {Error} if queue data was not loaded for the specified patch and language
+ */
 function getQueue(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
     const queues = getAllQueues(options);
     return queues.find(queue => queue.queueId == identifier) ?? null;
 }
+/**
+ * @param name The map's name
+ * @throws {Error} if queue data was not loaded for the specified patch and language
+ */
 function getQueuesByMap(name: string, options?: Hasagi.Data.LoadOptions) {
     const queues = getAllQueues(options);
     return queues.filter(queue => queue.map === name);
 }
 
+/**
+ * Gets all maps
+ * @throws {Error} if map data was not loaded for the specified patch and language
+ */
 function getAllMaps(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
@@ -349,12 +384,17 @@ async function loadAllMaps(options?: Hasagi.Data.LoadOptions, data?: Hasagi.Game
 }
 /**
  * @param identifier Name or id
+ * @throws {Error} if map data was not loaded for the specified patch and language
  */
 function getMap(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
     const maps = getAllMaps(options)
     return maps.find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
 }
 
+/**
+ * Gets all game modes
+ * @throws {Error} if game mode data was not loaded for the specified patch and language
+ */
 function getAllGameModes(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
@@ -386,6 +426,10 @@ async function loadAllGameModes(options?: Hasagi.Data.LoadOptions, data?: Hasagi
     DataStorage[patch][language].GameModes = gameModes;
 }
 
+/**
+ * Gets all game types
+ * @throws {Error} if game type data was not loaded for the specified patch and language
+ */
 function getAllGameTypes(options?: Hasagi.Data.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;

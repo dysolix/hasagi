@@ -37,21 +37,28 @@ export default class RunePage {
      * @param secondaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
      */
     public static async Create(name: string, runes: number[], primaryRuneTree?: Hasagi.RuneTree | number, secondaryRuneTree?: Hasagi.RuneTree | number) {
-        console.log({ name, runes, primaryRuneTree, secondaryRuneTree })
         if (primaryRuneTree === undefined) {
-            const primaryTreeId = await Data.getRuneTreeByRune(runes[0]).then(tree => tree?.id).catch();
-            if (primaryTreeId === undefined)
-                throw new Error(`Unable to fetch primaryStyleId for runes ${runes}.`);
+            try {
+                const primaryTreeId = Data.getRuneTreeByRune(runes[0])?.id;
+                if (primaryTreeId === undefined)
+                    throw new Error(`Unable to fetch primaryStyleId for runes ${runes}.`);
 
-            primaryRuneTree = primaryTreeId;
+                primaryRuneTree = primaryTreeId;
+            } catch (e) {
+                throw new Error(`Unable to fetch primaryStyleId for runes ${runes}.`);
+            }
         }
 
         if (secondaryRuneTree === undefined) {
-            const secondaryTreeId = await Data.getRuneTreeByRune(runes[4]).then(tree => tree?.id).catch();
-            if (secondaryTreeId === undefined)
-                throw new Error(`Unable to fetch subStyleId for runes ${runes}.`);
+            try {
+                const secondaryTreeId = Data.getRuneTreeByRune(runes[4])?.id;
+                if (secondaryTreeId === undefined)
+                    throw new Error(`Unable to fetch subStyleId for runes ${runes}.`);
 
-            secondaryRuneTree = secondaryTreeId;
+                secondaryRuneTree = secondaryTreeId;
+            } catch (e) {
+                throw new Error(`Unable to fetch subStyleId for runes ${runes}.`);
+            }
         }
 
         return new RunePage({
@@ -75,27 +82,5 @@ export default class RunePage {
      */
     existsInClient() {
         return HasagiClient.Instance?.runePages.some(rp => rp.id === this.id) ?? false;
-    }
-}
-
-let x: Hasagi.RunePage = {
-    autoModifiedSelections: [],
-    current: false,
-    id: 0,
-    isActive: false,
-    isDeletable: false,
-    isEditable: false,
-    isValid: false,
-    lastModified: 0,
-    name: "",
-    order: 0,
-    selectedPerkIds: [],
-    primaryStyleId: 0,
-    subStyleId: 0,
-    update: function (): void {
-        throw new Error("Function not implemented.");
-    },
-    existsInClient: function (): boolean {
-        throw new Error("Function not implemented.");
     }
 }
