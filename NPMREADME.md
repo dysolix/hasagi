@@ -8,3 +8,4 @@ Hasagi Library Changelog
 (0.1.8) Maybe fixed uncaught promise idk
 (0.2.2) Removed top-level await
 (0.2.3) Removed classes directory from exports field in package.json
+(0.2.4) Data loader functions now return true if data was actually downloaded and do no longer download data thats already stored
