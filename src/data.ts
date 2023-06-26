@@ -2,16 +2,16 @@ import { AxiosError } from "axios";
 import { httpGet, isPatchNewerOrEqual } from "./util.js";
 import { GAME_MODES, GAME_TYPES, MAPS, QUEUES, LAST_UPDATED as GAME_CONSTANTS_LAST_UPDATED } from "./game-constants.js";
 
-var DataStorage: Hasagi.Data.DataStorage = {}
+var DataDragonDataStorage: Hasagi.DataDragon.DataStorage = {}
 
-function getData(patch: string, language: string) {
-    if (!DataStorage[patch])
-        DataStorage[patch] = {}
+function getDataDragonData(patch: string, language: string) {
+    if (!DataDragonDataStorage[patch])
+        DataDragonDataStorage[patch] = {}
 
-    if (!DataStorage[patch][language])
-        DataStorage[patch][language] = {}
+    if (!DataDragonDataStorage[patch][language])
+        DataDragonDataStorage[patch][language] = {}
 
-    return DataStorage[patch][language];
+    return DataDragonDataStorage[patch][language];
 }
 
 class DataDownloadError extends Error {
@@ -30,10 +30,13 @@ function getDefaultPatch() {
     return defaultPatch;
 }
 
-const Data = {
-    getDataDragonURL: (patch: string, language: Hasagi.LanguageCode, file = "") => `https://ddragon.leagueoflegends.com/cdn/${patch}/data/${language}/${file}`,
-    getImageURL: (patch: string, file = "") => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${file}`,
-    getGameConstantsURL: (file: string = "") => `https://static.developer.riotgames.com/docs/lol/${file}`,
+const getDataDragonURL = (patch: string, language: Hasagi.LanguageCode, file = "") => `https://ddragon.leagueoflegends.com/cdn/${patch}/data/${language}/${file}`;
+const getImageURL = (patch: string, filePath = "") => `https://ddragon.leagueoflegends.com/cdn/${patch}/img/${filePath}`;
+const getGameConstantsURL = (file: string = "") => `https://static.developer.riotgames.com/docs/lol/${file}`;
+
+const DataDragon = {
+    getURL: getDataDragonURL,
+    getImageURL,
 
     setDefaultLanguage(language: Hasagi.LanguageCode) {
         defaultLanguage = language;
@@ -42,11 +45,11 @@ const Data = {
         defaultPatch = patch;
     },
 
-    getDataObject(): Hasagi.Data.DataStorage {
-        return DataStorage;
+    getDataObject(): Hasagi.DataDragon.DataStorage {
+        return DataDragonDataStorage;
     },
-    loadData(data: Hasagi.Data.DataStorage) {
-        DataStorage = data;
+    loadData(data: Hasagi.DataDragon.DataStorage) {
+        DataDragonDataStorage = data;
     },
 
     /**
@@ -56,12 +59,12 @@ const Data = {
     deleteOldData(patch: string) {
         let hasDeletedData = false;
 
-        Object.keys(DataStorage).forEach(key => {
+        Object.keys(DataDragonDataStorage).forEach(key => {
             if (isPatchNewerOrEqual(key, patch))
                 return;
 
             hasDeletedData = true;
-            delete DataStorage[key];
+            delete DataDragonDataStorage[key];
         })
 
         return hasDeletedData;
@@ -78,7 +81,7 @@ const Data = {
         return latest;
     },
 
-    async loadAllData(options: Hasagi.Data.LoadOptions) {
+    async loadAllData(options: Hasagi.DataDragon.LoadOptions) {
         return await Promise.all([
             loadAllChampions(options),
             loadAllSummonerSpells(options),
@@ -99,42 +102,6 @@ const Data = {
     getRuneTree,
     getRuneTreeByRune,
 
-    gameConstants: {
-        QUEUES,
-        MAPS,
-        GAME_MODES,
-        GAME_TYPES,
-        LAST_UPDATED: GAME_CONSTANTS_LAST_UPDATED,
-
-        /**
-         * Downloads the latest queues.json
-         */
-        downloadQueues(){
-            return httpGet<Hasagi.GameQueue[]>(Data.getGameConstantsURL("queues.json"))
-        },
-
-        /**
-         * Downloads the latest maps.json
-         */
-        downloadMaps(){
-            return httpGet<Hasagi.GameMap[]>(Data.getGameConstantsURL("maps.json"))
-        },
-
-        /**
-         * Downloads the latest gameModes.json
-         */
-        downloadGameModes(){
-            return httpGet<Hasagi.GameMode[]>(Data.getGameConstantsURL("gameModes.json"))
-        },
-
-        /**
-         * Downloads the latest gameTypes.json
-         */
-        downloadGameTypes(){
-            return httpGet<Hasagi.GameType[]>(Data.getGameConstantsURL("gameTypes.json"))
-        }
-    } as const
-
     //loadAllQueues,
     //getAllQueues,
     //getQueue,
@@ -151,17 +118,55 @@ const Data = {
     //getAllGameTypes,
 }
 
-export default Data;
+const GameConstants = {
+    QUEUES,
+    MAPS,
+    GAME_MODES,
+    GAME_TYPES,
+    LAST_UPDATED: GAME_CONSTANTS_LAST_UPDATED,
+
+    getURL: getGameConstantsURL,
+
+    /**
+     * Downloads the latest queues.json
+     */
+    downloadQueues(){
+        return httpGet<Hasagi.GameConstants.GameQueue[]>(getGameConstantsURL("queues.json"))
+    },
+
+    /**
+     * Downloads the latest maps.json
+     */
+    downloadMaps(){
+        return httpGet<Hasagi.GameConstants.GameMap[]>(getGameConstantsURL("maps.json"))
+    },
+
+    /**
+     * Downloads the latest gameModes.json
+     */
+    downloadGameModes(){
+        return httpGet<Hasagi.GameConstants.GameMode[]>(getGameConstantsURL("gameModes.json"))
+    },
+
+    /**
+     * Downloads the latest gameTypes.json
+     */
+    downloadGameTypes(){
+        return httpGet<Hasagi.GameConstants.GameType[]>(getGameConstantsURL("gameTypes.json"))
+    }
+} as const
+
+export { DataDragon, GameConstants };
 
 /**
  * Gets all champions
  * @throws {Error} if champion data was not loaded for the specified patch and language
  */
-function getAllChampions(options?: Hasagi.Data.LoadOptions) {
+function getAllChampions(options?: Hasagi.DataDragon.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
 
-    const champions = getData(patch, language).Champions
+    const champions = getDataDragonData(patch, language).Champions
     if (champions === undefined)
         throw new Error(`Champion data is not stored. (${patch}/${language})`);
 
@@ -173,31 +178,31 @@ function getAllChampions(options?: Hasagi.Data.LoadOptions) {
  * @param data If provided, loads this data instead of downloading it
  * @returns true, if new data was downloaded
  */
-async function loadAllChampions(options: Hasagi.Data.LoadOptions = {}, data?: Hasagi.Champion[]) {
+async function loadAllChampions(options: Hasagi.DataDragon.LoadOptions = {}, data?: Hasagi.DataDragon.Champion[]) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
 
-    if (DataStorage[patch][language].Champions)
+    if (getDataDragonData(patch, language).Champions)
         return false;
 
     if (data) {
-        DataStorage[patch][language].Champions = data;
+        DataDragonDataStorage[patch][language].Champions = data;
         return false;
     }
 
-    const champions = await httpGet<Hasagi.Champion[]>(Data.getDataDragonURL(patch, language, "championFull.json"), res => Object.values(JSON.parse(res).data))
+    const champions = await httpGet<Hasagi.DataDragon.Champion[]>(DataDragon.getURL(patch, language, "championFull.json"), res => Object.values(JSON.parse(res).data))
         .then(champions => { return champions }, err => {
             throw new DataDownloadError("Unable to load champions.", err)
         })
 
-    DataStorage[patch][language].Champions = champions;
+    DataDragonDataStorage[patch][language].Champions = champions;
     return true;
 }
 /**
  * @param identifier Can be the name, key or id
  * @throws {Error} if champion data was not loaded for the specified patch and language
  */
-function getChampion(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
+function getChampion(identifier: string | number, options?: Hasagi.DataDragon.LoadOptions) {
     const champions = getAllChampions(options);
 
     if (!isNaN(identifier as any)) {
@@ -211,11 +216,11 @@ function getChampion(identifier: string | number, options?: Hasagi.Data.LoadOpti
  * Gets all summoner spells
  * @throws {Error} if summoner spell data was not loaded for the specified patch and language
  */
-function getAllSummonerSpells(options?: Hasagi.Data.LoadOptions) {
+function getAllSummonerSpells(options?: Hasagi.DataDragon.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
 
-    const summonerSpells = getData(patch, language).SummonerSpells
+    const summonerSpells = getDataDragonData(patch, language).SummonerSpells
     if (summonerSpells === undefined)
         throw new Error(`Summoner spell data is not stored. (${patch}/${language})`);
 
@@ -226,24 +231,24 @@ function getAllSummonerSpells(options?: Hasagi.Data.LoadOptions) {
  * @param data If provided, loads this data instead of downloading it
  * @returns true, if new data was downloaded
  */
-async function loadAllSummonerSpells(options?: Hasagi.Data.LoadOptions, data?: Hasagi.SummonerSpell[]) {
+async function loadAllSummonerSpells(options?: Hasagi.DataDragon.LoadOptions, data?: Hasagi.DataDragon.SummonerSpell[]) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
 
-    if (DataStorage[patch][language].SummonerSpells)
+    if (getDataDragonData(patch, language).SummonerSpells)
         return false;
 
     if (data) {
-        DataStorage[patch][language].SummonerSpells = data;
+        DataDragonDataStorage[patch][language].SummonerSpells = data;
         return false;
     }
 
-    const summonerSpells = await httpGet<Hasagi.SummonerSpell[]>(Data.getDataDragonURL(patch, language, "summoner.json"), res => Object.values(JSON.parse(res).data))
+    const summonerSpells = await httpGet<Hasagi.DataDragon.SummonerSpell[]>(DataDragon.getURL(patch, language, "summoner.json"), res => Object.values(JSON.parse(res).data))
         .then(summonerSpells => { return summonerSpells; }, err => {
             throw new DataDownloadError("Unable to load summoner spells.", err)
         })
 
-    DataStorage[patch][language].SummonerSpells = summonerSpells;
+    DataDragonDataStorage[patch][language].SummonerSpells = summonerSpells;
     return true;
 }
 
@@ -251,11 +256,11 @@ async function loadAllSummonerSpells(options?: Hasagi.Data.LoadOptions, data?: H
  * Gets all runes
  * @throws {Error} if rune data was not loaded for the specified patch and language
  */
-function getAllRunes(options?: Hasagi.Data.LoadOptions) {
+function getAllRunes(options?: Hasagi.DataDragon.LoadOptions) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
 
-    const runes = getData(patch, language).Runes
+    const runes = getDataDragonData(patch, language).Runes
     if (runes === undefined)
         throw new Error(`Rune data is not stored. (${patch}/${language})`);
 
@@ -266,33 +271,33 @@ function getAllRunes(options?: Hasagi.Data.LoadOptions) {
  * @param data If provided, loads this data instead of downloading it
  * @returns true, if new data was downloaded
  */
-async function loadAllRunes(options?: Hasagi.Data.LoadOptions, data?: Hasagi.RuneTree[]) {
+async function loadAllRunes(options?: Hasagi.DataDragon.LoadOptions, data?: Hasagi.DataDragon.RuneTree[]) {
     const patch = options?.patch ?? getDefaultPatch();
     const language = options?.language ?? defaultLanguage;
 
-    if (DataStorage[patch][language].Runes)
+    if (getDataDragonData(patch, language).Runes)
         return false;
 
     if (data) {
-        DataStorage[patch][language].Runes = data;
+        DataDragonDataStorage[patch][language].Runes = data;
         return false;
     }
 
-    const runes = await httpGet<Hasagi.RuneTree[]>(Data.getDataDragonURL(patch, language, "runesReforged.json"))
+    const runes = await httpGet<Hasagi.DataDragon.RuneTree[]>(DataDragon.getURL(patch, language, "runesReforged.json"))
         .then(runes => { return runes; }, err => {
             throw new DataDownloadError("Unable to load runes.", err)
         })
 
-    DataStorage[patch][language].Runes = runes;
+    DataDragonDataStorage[patch][language].Runes = runes;
     return true;
 }
 /**
  * @param identifier Name or id
  * @throws {Error} if rune data was not loaded for the specified patch and language
  */
-function getRune(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
+function getRune(identifier: string | number, options?: Hasagi.DataDragon.LoadOptions) {
     const runes = getAllRunes(options);
-    var predicate: (rune: Hasagi.Rune) => boolean;
+    var predicate: (rune: Hasagi.DataDragon.Rune) => boolean;
 
     if (!isNaN(identifier as any)) {
         predicate = rune => rune.id == identifier;
@@ -313,9 +318,9 @@ function getRune(identifier: string | number, options?: Hasagi.Data.LoadOptions)
  * @param identifier Name, id or key
  * @throws {Error} if rune data was not loaded for the specified patch and language
  */
-function getRuneTree(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
+function getRuneTree(identifier: string | number, options?: Hasagi.DataDragon.LoadOptions) {
     const runes = getAllRunes(options)
-    var predicate: (runeTree: Hasagi.RuneTree) => boolean;
+    var predicate: (runeTree: Hasagi.DataDragon.RuneTree) => boolean;
 
     if (!isNaN(identifier as any)) {
         predicate = runeTree => runeTree.id == identifier;
@@ -329,7 +334,7 @@ function getRuneTree(identifier: string | number, options?: Hasagi.Data.LoadOpti
  * @param rune Hasagi.Rune, name, id or key
  * @throws {Error} if rune data was not loaded for the specified patch and language
  */
-function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi.Data.LoadOptions) {
+function getRuneTreeByRune(rune: Hasagi.DataDragon.Rune | string | number, options?: Hasagi.DataDragon.LoadOptions) {
     if (typeof rune === "string" || typeof rune === "number") {
         let r = getRune(rune, options)
         if (r === null)
@@ -536,4 +541,4 @@ function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi
 //     return true;
 // }
 
-Data.getLatestPatch("euw").then(latest => Data.setDefaultPatch(latest), err => { });
+DataDragon.getLatestPatch("euw").then(latest => DataDragon.setDefaultPatch(latest), err => { });

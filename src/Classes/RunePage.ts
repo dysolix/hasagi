@@ -1,4 +1,4 @@
-import { HasagiClient, Data } from "../index.js";
+import { HasagiClient, DataDragon } from "../index.js";
 
 export default class RunePage {
     autoModifiedSelections: any[];
@@ -36,10 +36,10 @@ export default class RunePage {
      * @param primaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
      * @param secondaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
      */
-    public static async Create(name: string, runes: number[], primaryRuneTree?: Hasagi.RuneTree | number, secondaryRuneTree?: Hasagi.RuneTree | number) {
+    public static async Create(name: string, runes: number[], primaryRuneTree?: Hasagi.DataDragon.RuneTree | number, secondaryRuneTree?: Hasagi.DataDragon.RuneTree | number) {
         if (primaryRuneTree === undefined) {
             try {
-                const primaryTreeId = Data.getRuneTreeByRune(runes[0])?.id;
+                const primaryTreeId = DataDragon.getRuneTreeByRune(runes[0])?.id;
                 if (primaryTreeId === undefined)
                     throw new Error(`Unable to fetch primaryStyleId for runes ${runes}.`);
 
@@ -51,7 +51,7 @@ export default class RunePage {
 
         if (secondaryRuneTree === undefined) {
             try {
-                const secondaryTreeId = Data.getRuneTreeByRune(runes[4])?.id;
+                const secondaryTreeId = DataDragon.getRuneTreeByRune(runes[4])?.id;
                 if (secondaryTreeId === undefined)
                     throw new Error(`Unable to fetch subStyleId for runes ${runes}.`);
 
