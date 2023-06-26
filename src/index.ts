@@ -22,10 +22,6 @@ declare global {
                         Champions?: Hasagi.Champion[],
                         SummonerSpells?: Hasagi.SummonerSpell[],
                         Runes?: Hasagi.RuneTree[],
-                        Queues?: Hasagi.GameQueue[],
-                        Maps?: Hasagi.GameMap[],
-                        GameModes?: Hasagi.GameMode[],
-                        GameTypes?: Hasagi.GameType[]
                     }
                 }
             }

@@ -1,5 +1,6 @@
 import { AxiosError } from "axios";
 import { httpGet, isPatchNewerOrEqual } from "./util.js";
+import { GAME_MODES, GAME_TYPES, MAPS, QUEUES, LAST_UPDATED as GAME_CONSTANTS_LAST_UPDATED } from "./game-constants.js";
 
 var DataStorage: Hasagi.Data.DataStorage = {}
 
@@ -78,15 +79,11 @@ const Data = {
     },
 
     async loadAllData(options: Hasagi.Data.LoadOptions) {
-        await Promise.all([
+        return await Promise.all([
             loadAllChampions(options),
             loadAllSummonerSpells(options),
             loadAllRunes(options),
-            loadAllQueues(options),
-            loadAllMaps(options),
-            loadAllGameModes(options),
-            loadAllGameTypes(options)
-        ]);
+        ]).then(res => res.some(hasDownloaded => hasDownloaded));
     },
 
     loadAllChampions,
@@ -102,20 +99,56 @@ const Data = {
     getRuneTree,
     getRuneTreeByRune,
 
-    loadAllQueues,
-    getAllQueues,
-    getQueue,
-    getQueuesByMap,
+    gameConstants: {
+        QUEUES,
+        MAPS,
+        GAME_MODES,
+        GAME_TYPES,
+        LAST_UPDATED: GAME_CONSTANTS_LAST_UPDATED,
 
-    loadAllMaps,
-    getAllMaps,
-    getMap,
+        /**
+         * Downloads the latest queues.json
+         */
+        downloadQueues(){
+            return httpGet<Hasagi.GameQueue[]>(Data.getGameConstantsURL("queues.json"))
+        },
 
-    loadAllGameModes,
-    getAllGameModes,
+        /**
+         * Downloads the latest maps.json
+         */
+        downloadMaps(){
+            return httpGet<Hasagi.GameMap[]>(Data.getGameConstantsURL("maps.json"))
+        },
 
-    loadAllGameTypes,
-    getAllGameTypes,
+        /**
+         * Downloads the latest gameModes.json
+         */
+        downloadGameModes(){
+            return httpGet<Hasagi.GameMode[]>(Data.getGameConstantsURL("gameModes.json"))
+        },
+
+        /**
+         * Downloads the latest gameTypes.json
+         */
+        downloadGameTypes(){
+            return httpGet<Hasagi.GameType[]>(Data.getGameConstantsURL("gameTypes.json"))
+        }
+    } as const
+
+    //loadAllQueues,
+    //getAllQueues,
+    //getQueue,
+    //getQueuesByMap,
+
+    //loadAllMaps,
+    //getAllMaps,
+    //getMap,
+
+    //loadAllGameModes,
+    //getAllGameModes,
+
+    //loadAllGameTypes,
+    //getAllGameTypes,
 }
 
 export default Data;
@@ -318,188 +351,189 @@ function getRuneTreeByRune(rune: Hasagi.Rune | string | number, options?: Hasagi
     return null;
 }
 
-/**
- * Gets all queues
- * @throws {Error} if queue data was not loaded for the specified patch and language
- */
-function getAllQueues(options?: Hasagi.Data.LoadOptions) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+// /**
+//  * Gets all queues
+//  * @throws {Error} if queue data was not loaded for the specified patch and language
+//  */
+// function getAllQueues(options?: Hasagi.Data.LoadOptions) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    const queues = getData(patch, language).Queues;
-    if (queues === undefined)
-        throw new Error(`Queue data is not stored. (${patch}/${language})`);
+//     const queues = getData(patch, language).Queues;
+//     if (queues === undefined)
+//         throw new Error(`Queue data is not stored. (${patch}/${language})`);
 
-    return queues;
-}
-/**
- * Load the data of all queues for the specified patch and language
- * @param data If provided, loads this data instead of downloading it
- * @returns true, if new data was downloaded
- */
-async function loadAllQueues(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameQueue[]) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+//     return queues;
+// }
+// /**
+//  * Load the data of all queues for the specified patch and language
+//  * @param data If provided, loads this data instead of downloading it
+//  * @returns true, if new data was downloaded
+//  */
+// async function loadAllQueues(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameQueue[]) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    if (DataStorage[patch][language].Queues)
-        return false;
+//     if (DataStorage[patch][language].Queues)
+//         return false;
 
-    if (data) {
-        DataStorage[patch][language].Queues = data;
-        return false;
-    }
+//     if (data) {
+//         DataStorage[patch][language].Queues = data;
+//         return false;
+//     }
 
-    const queues = await httpGet<Hasagi.GameQueue[]>(Data.getDataDragonURL(patch, language, "runesReforged.json"))
-        .then(queues => { return queues; }, err => {
-            throw new DataDownloadError("Unable to load queues.", err)
-        })
+//     const queues = await httpGet<Hasagi.GameQueue[]>(Data.getDataDragonURL(patch, language, "runesReforged.json"))
+//         .then(queues => { return queues; }, err => {
+//             throw new DataDownloadError("Unable to load queues.", err)
+//         })
 
-    DataStorage[patch][language].Queues = queues;
-    return true;
-}
-/**
- * @param identifier The queue's id
- * @throws {Error} if queue data was not loaded for the specified patch and language
- */
-function getQueue(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
-    const queues = getAllQueues(options);
-    return queues.find(queue => queue.queueId == identifier) ?? null;
-}
-/**
- * @param name The map's name
- * @throws {Error} if queue data was not loaded for the specified patch and language
- */
-function getQueuesByMap(name: string, options?: Hasagi.Data.LoadOptions) {
-    const queues = getAllQueues(options);
-    return queues.filter(queue => queue.map === name);
-}
+//     DataStorage[patch][language].Queues = queues;
+//     return true;
+// }
 
-/**
- * Gets all maps
- * @throws {Error} if map data was not loaded for the specified patch and language
- */
-function getAllMaps(options?: Hasagi.Data.LoadOptions) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+// /**
+//  * @param identifier The queue's id
+//  * @throws {Error} if queue data was not loaded for the specified patch and language
+//  */
+// function getQueue(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
+//     const queues = getAllQueues(options);
+//     return queues.find(queue => queue.queueId == identifier) ?? null;
+// }
+// /**
+//  * @param name The map's name
+//  * @throws {Error} if queue data was not loaded for the specified patch and language
+//  */
+// function getQueuesByMap(name: string, options?: Hasagi.Data.LoadOptions) {
+//     const queues = getAllQueues(options);
+//     return queues.filter(queue => queue.map === name);
+// }
 
-    const maps = getData(patch, language).Maps;
-    if (maps === undefined)
-        throw new Error(`Map data is not stored. (${patch}/${language})`);
+// /**
+//  * Gets all maps
+//  * @throws {Error} if map data was not loaded for the specified patch and language
+//  */
+// function getAllMaps(options?: Hasagi.Data.LoadOptions) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    return maps;
-}
-/**
- * Load the data of all maps for the specified patch and language
- * @param data If provided, loads this data instead of downloading it
- * @returns true, if new data was downloaded
- */
-async function loadAllMaps(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameMap[]) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+//     const maps = getData(patch, language).Maps;
+//     if (maps === undefined)
+//         throw new Error(`Map data is not stored. (${patch}/${language})`);
 
-    if (DataStorage[patch][language].Maps)
-        return false;
+//     return maps;
+// }
+// /**
+//  * Load the data of all maps for the specified patch and language
+//  * @param data If provided, loads this data instead of downloading it
+//  * @returns true, if new data was downloaded
+//  */
+// async function loadAllMaps(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameMap[]) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    if (data) {
-        DataStorage[patch][language].Maps = data;
-        return false;
-    }
+//     if (DataStorage[patch][language].Maps)
+//         return false;
 
-    const maps = await httpGet<Hasagi.GameMap[]>(Data.getDataDragonURL(patch, language, "maps.json"))
-        .then(maps => { return maps; }, err => {
-            throw new DataDownloadError("Unable to load maps.", err)
-        })
+//     if (data) {
+//         DataStorage[patch][language].Maps = data;
+//         return false;
+//     }
 
-    DataStorage[patch][language].Maps = maps;
-    return true;
-}
-/**
- * @param identifier Name or id
- * @throws {Error} if map data was not loaded for the specified patch and language
- */
-function getMap(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
-    const maps = getAllMaps(options)
-    return maps.find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
-}
+//     const maps = await httpGet<Hasagi.GameMap[]>(Data.getDataDragonURL(patch, language, "maps.json"))
+//         .then(maps => { return maps; }, err => {
+//             throw new DataDownloadError("Unable to load maps.", err)
+//         })
 
-/**
- * Gets all game modes
- * @throws {Error} if game mode data was not loaded for the specified patch and language
- */
-function getAllGameModes(options?: Hasagi.Data.LoadOptions) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+//     DataStorage[patch][language].Maps = maps;
+//     return true;
+// }
+// /**
+//  * @param identifier Name or id
+//  * @throws {Error} if map data was not loaded for the specified patch and language
+//  */
+// function getMap(identifier: string | number, options?: Hasagi.Data.LoadOptions) {
+//     const maps = getAllMaps(options)
+//     return maps.find(map => map.mapId == identifier || map.mapName == identifier) ?? null;
+// }
 
-    const gameModes = getData(patch, language).GameModes;
-    if (gameModes === undefined)
-        throw new Error(`Game mode data is not stored. (${patch}/${language})`);
+// /**
+//  * Gets all game modes
+//  * @throws {Error} if game mode data was not loaded for the specified patch and language
+//  */
+// function getAllGameModes(options?: Hasagi.Data.LoadOptions) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    return gameModes;
-}
-/**
- * Load the data of all game modes for the specified patch and language
- * @param data If provided, loads this data instead of downloading it
- * @returns true, if new data was downloaded
- */
-async function loadAllGameModes(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameMode[]) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+//     const gameModes = getData(patch, language).GameModes;
+//     if (gameModes === undefined)
+//         throw new Error(`Game mode data is not stored. (${patch}/${language})`);
 
-    if (DataStorage[patch][language].GameModes)
-        return false;
+//     return gameModes;
+// }
+// /**
+//  * Load the data of all game modes for the specified patch and language
+//  * @param data If provided, loads this data instead of downloading it
+//  * @returns true, if new data was downloaded
+//  */
+// async function loadAllGameModes(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameMode[]) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    if (data) {
-        DataStorage[patch][language].GameModes = data;
-        return false;
-    }
+//     if (DataStorage[patch][language].GameModes)
+//         return false;
 
-    const gameModes = await httpGet<Hasagi.GameMode[]>(Data.getDataDragonURL(patch, language, "gameModes.json"))
-        .then(gameModes => { return gameModes; }, err => {
-            throw new DataDownloadError("Unable to load game modes.", err)
-        });
+//     if (data) {
+//         DataStorage[patch][language].GameModes = data;
+//         return false;
+//     }
 
-    DataStorage[patch][language].GameModes = gameModes;
-    return true;
-}
+//     const gameModes = await httpGet<Hasagi.GameMode[]>(Data.getDataDragonURL(patch, language, "gameModes.json"))
+//         .then(gameModes => { return gameModes; }, err => {
+//             throw new DataDownloadError("Unable to load game modes.", err)
+//         });
 
-/**
- * Gets all game types
- * @throws {Error} if game type data was not loaded for the specified patch and language
- */
-function getAllGameTypes(options?: Hasagi.Data.LoadOptions) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+//     DataStorage[patch][language].GameModes = gameModes;
+//     return true;
+// }
 
-    const gameTypes = getData(patch, language).GameTypes;
-    if (gameTypes === undefined)
-        throw new Error(`Game type data is not stored. (${patch}/${language})`);
+// /**
+//  * Gets all game types
+//  * @throws {Error} if game type data was not loaded for the specified patch and language
+//  */
+// function getAllGameTypes(options?: Hasagi.Data.LoadOptions) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    return gameTypes;
-}
-/**
- * Load the data of all game types for the specified patch and language
- * @param data If provided, loads this data instead of downloading it
- * @returns true, if new data was downloaded
- */
-async function loadAllGameTypes(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameType[]) {
-    const patch = options?.patch ?? getDefaultPatch();
-    const language = options?.language ?? defaultLanguage;
+//     const gameTypes = getData(patch, language).GameTypes;
+//     if (gameTypes === undefined)
+//         throw new Error(`Game type data is not stored. (${patch}/${language})`);
 
-    if (DataStorage[patch][language].GameTypes)
-        return false;
+//     return gameTypes;
+// }
+// /**
+//  * Load the data of all game types for the specified patch and language
+//  * @param data If provided, loads this data instead of downloading it
+//  * @returns true, if new data was downloaded
+//  */
+// async function loadAllGameTypes(options?: Hasagi.Data.LoadOptions, data?: Hasagi.GameType[]) {
+//     const patch = options?.patch ?? getDefaultPatch();
+//     const language = options?.language ?? defaultLanguage;
 
-    if (data) {
-        DataStorage[patch][language].GameTypes = data;
-        return false;
-    }
+//     if (DataStorage[patch][language].GameTypes)
+//         return false;
 
-    const gameTypes = await httpGet<Hasagi.GameType[]>(Data.getDataDragonURL(patch, language, "gameTypes.json"))
-        .then(gameTypes => { return gameTypes; }, err => {
-            throw new DataDownloadError("Unable to load game types.", err)
-        })
+//     if (data) {
+//         DataStorage[patch][language].GameTypes = data;
+//         return false;
+//     }
 
-    DataStorage[patch][language].GameTypes = gameTypes;
-    return true;
-}
+//     const gameTypes = await httpGet<Hasagi.GameType[]>(Data.getDataDragonURL(patch, language, "gameTypes.json"))
+//         .then(gameTypes => { return gameTypes; }, err => {
+//             throw new DataDownloadError("Unable to load game types.", err)
+//         })
+
+//     DataStorage[patch][language].GameTypes = gameTypes;
+//     return true;
+// }
 
 Data.getLatestPatch("euw").then(latest => Data.setDefaultPatch(latest), err => { });

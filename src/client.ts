@@ -1,5 +1,4 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
-import { exec, spawn } from "child_process";
 import { Agent } from "https";
 import { TypedEmitter } from "tiny-typed-emitter";
 import ChampSelectSession from "./Classes/ChampSelectSession.js";
@@ -8,8 +7,8 @@ import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
 import find from "find-process";
 
-export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
-    static Instance: Client | null = null;
+export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
+    static Instance: HasagiClient | null = null;
 
     public isConnected: boolean = false;
 
@@ -24,7 +23,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             rejectUnauthorized: false
         }),
         adapter: "http"
-    }); //new HttpsClient("127.0.0.1", 2999);
+    });
 
     public champSelectSession: ChampSelectSession | null = null;
 
@@ -43,7 +42,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
         super();
 
         this.autoReconnect = autoReconnect;
-        Client.Instance = this;
+        HasagiClient.Instance = this;
     }
 
     //#region Connection
@@ -202,7 +201,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     }
     //#endregion
 
-    private async getGameflowSession(): Promise<Hasagi.GameFlowSession> {
+    public async getGameflowSession(): Promise<Hasagi.GameFlowSession> {
         if (this.httpClient === null)
             throwNotConnectedError();
 
@@ -211,7 +210,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
 
     //#region Ready Check
     /**
-     * Accepts a ready check
+     * Accepts a ready check. WARNING: Do not use this unless Riot allowed you to use this.
      */
     acceptMatch() {
         if (this.httpClient === null)
@@ -221,7 +220,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     }
 
     /**
-     * Declines a ready check
+     * Declines a ready check. WARNING: Do not use this unless Riot allowed you to use this.
      */
     declineMatch() {
         if (this.httpClient === null)
@@ -232,6 +231,9 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     //#endregion
 
     //#region Champ Select
+    /**
+     *  WARNING: Do not use this unless Riot allowed you to use this.
+     */
     declarePickIntent(championId: number | string) {
         if (this.httpClient === null)
             throwNotConnectedError();
@@ -242,6 +244,9 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
         return this.httpClient.patch("/lol-lobby-team-builder/champ-select/v1/session/actions/" + this.champSelectSession.ownPickActionId, { championId: Number(championId) })
     }
 
+    /**
+     *  WARNING: Do not use this unless Riot allowed you to use this.
+     */
     declareBanIntent(championId: number | string) {
         if (this.httpClient === null)
             throwNotConnectedError();
@@ -252,6 +257,9 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
         return this.httpClient.patch("/lol-lobby-team-builder/champ-select/v1/session/actions/" + this.champSelectSession.ownBanActionId, { championId: Number(championId) })
     }
 
+    /**
+     *  WARNING: Do not use this unless Riot allowed you to use this.
+     */
     lockPick() {
         if (this.httpClient === null)
             throwNotConnectedError();
@@ -262,6 +270,9 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
         return this.httpClient.post("/lol-lobby-team-builder/champ-select/v1/session/actions/" + this.champSelectSession.ownPickActionId + "/complete")
     }
 
+    /**
+     *  WARNING: Do not use this unless Riot allowed you to use this.
+     */
     lockBan() {
         if (this.httpClient === null)
             throwNotConnectedError();
@@ -590,7 +601,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     //#endregion
 
     /**
-     * Endpoints from http://www.mingweisamuel.com/lcu-schema/tool/. All response and body types can be found there.
+     * Endpoints from http://www.mingweisamuel.com/lcu-schema/tool/. All response and body types can be found there. Incomplete.
      */
     LCUEndpoints = {
         LobbyTeamBuilder: {
@@ -598,145 +609,145 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                 Session: {
                     path: "/lol-lobby-team-builder/champ-select/v1/session",
                     async get(): Promise<Hasagi.IChampSelectSession> {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     },
                     Timer: {
                         path: "/lol-lobby-team-builder/champ-select/v1/session/timer",
                         async get() {
-                            if (Client.Instance!.httpClient === null)
+                            if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                         }
                     },
                     Trades: {
                         path: "/lol-lobby-team-builder/champ-select/v1/session/trades",
                         async get() {
-                            if (Client.Instance!.httpClient === null)
+                            if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                         },
                     },
                     TradesWithId: {
                         getPath: (id: string | number) => `/lol-lobby-team-builder/champ-select/v1/session/trades/${id}`,
                         async get(id: string | number): Promise<any> {
-                            if (Client.Instance!.httpClient === null)
+                            if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await Client.Instance!.httpClient.get(this.getPath(id)).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.getPath(id)).then(res => res.data);
                         }
                     }
                 },
                 BannableChampionIds: {
                     path: "/lol-lobby-team-builder/champ-select/v1/bannable-champion-ids",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 CurrentChampion: {
                     path: "/lol-lobby-team-builder/champ-select/v1/current-champion",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 DisabledChampionIds: {
                     path: "/lol-lobby-team-builder/champ-select/v1/disabled-champion-ids",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 HasAutoAssignedSmite: {
                     path: "/lol-lobby-team-builder/champ-select/v1/has-auto-assigned-smite",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 ImplementationActive: {
                     path: "/lol-lobby-team-builder/champ-select/v1/implementation-active",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 MatchToken: {
                     path: "/lol-lobby-team-builder/champ-select/v1/match-token",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 PickableChampionIds: {
                     path: "/lol-lobby-team-builder/champ-select/v1/pickable-champion-ids",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 PickableSkinIds: {
                     path: "/lol-lobby-team-builder/champ-select/v1/pickable-skin-ids",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 Preferences: {
                     path: "/lol-lobby-team-builder/champ-select/v1/preferences",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 SendingLoadoutsGcosEnabled: {
                     path: "/lol-lobby-team-builder/champ-select/v1/sending-loadouts-gcos-enabled",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 TeamBoost: {
                     path: "/lol-lobby-team-builder/champ-select/v1/team-boost",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 Matchmaking: {
                     path: "/lol-lobby-team-builder/v1/matchmaking",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 }
             }
@@ -745,137 +756,137 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             CurrentPage: {
                 path: "/lol-perks/v1/currentpage",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 },
                 async put(id: number) {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    await Client.Instance!.httpClient.put(this.path, id);
+                    await HasagiClient.Instance!.httpClient.put(this.path, id);
                 }
             },
             CustomizationLimits: {
                 path: "/lol-perks/v1/customizationlimits",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             Inventory: {
                 path: "/lol-perks/v1/inventory",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             Pages: {
                 path: "/lol-perks/v1/pages",
                 async get(): Promise<RunePage[]> {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path, { transformResponse: res => JSON.parse(res).map((entry: any) => new RunePage(entry)) }).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path, { transformResponse: res => JSON.parse(res).map((entry: any) => new RunePage(entry)) }).then(res => res.data);
                 },
                 async post(runePage: RunePage) {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    await Client.Instance!.httpClient.post(this.path, runePage);
+                    await HasagiClient.Instance!.httpClient.post(this.path, runePage);
                 },
 
                 WithId: {
                     getPath: (id: string | number) => `/lol-perks/v1/pages/${id}`,
                     async get(id: string | number): Promise<any> {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return (await Client.Instance!.httpClient.get(this.getPath(id))).data;
+                        return (await HasagiClient.Instance!.httpClient.get(this.getPath(id))).data;
                     },
                     async delete(id: number) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        await Client.Instance!.httpClient.delete(this.getPath(id));
+                        await HasagiClient.Instance!.httpClient.delete(this.getPath(id));
                     }
                 }
             },
             Perks: {
                 path: "/lol-perks/v1/perks",
                 async get(): Promise<Hasagi.Rune[]> {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 },
                 Disabled: {
                     path: "/lol-perks/v1/perks/disabled",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 GameplayUpdated: {
                     path: "/lol-perks/v1/perks/gameplay-updated",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 }
             },
             SchemaVersion: {
                 path: "/lol-perks/v1/schema-version",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             ServiceSettings: {
                 path: "/lol-perks/v1/servicesettings",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             Settings: {
                 path: "/lol-perks/v1/settings",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             ShowAutoModifiedPagesNotification: {
                 path: "/lol-perks/v1/show-auto-modified-pages-notification",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             Styles: {
                 path: "/lol-perks/v1/styles",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             }
         },
@@ -883,131 +894,131 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             ActivePatcherLock: {
                 path: "/lol-gameflow/v1/active-patcher-lock",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             Availability: {
                 path: "/lol-gameflow/v1/availability",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             BasicTutorial: {
                 path: "/lol-gameflow/v1/basic-tutorial",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             BattleTraining: {
                 path: "/lol-gameflow/v1/battle-training",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             EarlyExitNotification: {
                 Eog: {
                     path: "/lol-gameflow/v1/early-exit-notifications/eog",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 Missions: {
                     path: "/lol-gameflow/v1/early-exit-notifications/missions",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 }
             },
             ExtraGameClientArgs: {
                 path: "/lol-gameflow/v1/extra-game-client-args",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             GameflowMetadata: {
                 PlayerStatus: {
                     path: "/lol-gameflow/v1/gameflow-metadata/player-status",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 },
                 RegistrationStatus: {
                     path: "/lol-gameflow/v1/gameflow-metadata/registration-status",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 }
             },
             GameflowPhase: {
                 path: "/lol-gameflow/v1/gameflow-phase",
                 async get(): Promise<Hasagi.GameFlowPhase> {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             },
             Session: {
                 path: "/lol-gameflow/v1/session",
                 async get(): Promise<Hasagi.GameFlowSession> {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 },
                 PerPositionSummonerSpells: {
                     Disallowed: {
                         path: "/lol-gameflow/v1/session/per-position-summoner-spells/disallowed",
                         async get() {
-                            if (Client.Instance!.httpClient === null)
+                            if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                         },
                         AsString: { path: "/lol-gameflow/v1/session/per-position-summoner-spells/disallowed/as-string" }
                     },
                     Required: {
                         path: "/lol-gameflow/v1/session/per-position-summoner-spells/required",
                         async get() {
-                            if (Client.Instance!.httpClient === null)
+                            if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                         },
                         AsString: {
                             path: "/lol-gameflow/v1/session/per-position-summoner-spells/required/as-string",
                             async get() {
-                                if (Client.Instance!.httpClient === null)
+                                if (HasagiClient.Instance!.httpClient === null)
                                     throwNotConnectedError();
 
-                                return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                                return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                             }
                         }
                     }
@@ -1016,28 +1027,28 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             Spectate: {
                 path: "/lol-gameflow/v1/spectate",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 },
                 DelayedLaunch: {
                     path: "/lol-gameflow/v1/spectate/delayed-launch",
                     async get() {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                     }
                 }
             },
             Watch: {
                 path: "/lol-gameflow/v1/watch",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             }
         },
@@ -1045,10 +1056,10 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             CurrentRankedStats: {
                 path: "/lol-ranked/v1/current-ranked-stats",
                 async get(): Promise<Hasagi.CurrentRankData> {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
                 }
             }
         },
@@ -1056,18 +1067,18 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
             CurrentSummoner: {
                 path: "/lol-summoner/v1/current-summoner",
                 async get() {
-                    if (Client.Instance!.httpClient === null)
+                    if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await Client.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.Summoner);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.Summoner);
                 },
                 Icon: {
                     path: "/lol-summoner/v1/current-summoner/icon",
                     async put(profileIconId: number | string) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.put(this.path, { profileIconId });
+                        return await HasagiClient.Instance!.httpClient.put(this.path, { profileIconId });
                     }
                 }
             },
@@ -1075,10 +1086,10 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                 WithId: {
                     getPath: (id: number) => `/lol-summoner/v1/summoners/${id}`,
                     async get(id: number) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.getPath(id)).then(res => res.data as Hasagi.Summoner);
+                        return await HasagiClient.Instance!.httpClient.get(this.getPath(id)).then(res => res.data as Hasagi.Summoner);
                     }
                 }
             }
@@ -1093,38 +1104,38 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                 WithId: {
                     getPath: (id: string) => `/lol-loadouts/v4/loadouts/${id}`,
                     async get(id: string) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.get(this.getPath(id)).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.getPath(id)).then(res => res.data);
                     },
                     async put(id: string, body: any) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        await Client.Instance!.httpClient.put(this.getPath(id), body);
+                        await HasagiClient.Instance!.httpClient.put(this.getPath(id), body);
                     },
                     async delete(id: string) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        await Client.Instance!.httpClient.delete(this.getPath(id));
+                        await HasagiClient.Instance!.httpClient.delete(this.getPath(id));
                     },
                     async patch(id: string, body: any) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        await Client.Instance!.httpClient.patch(this.getPath(id), body);
+                        await HasagiClient.Instance!.httpClient.patch(this.getPath(id), body);
                     }
                 },
                 Scope: {
                     Account: {
                         path: "/lol-loadouts/v4/loadouts/scope/account",
                         async get() {
-                            if (Client.Instance!.httpClient === null)
+                            if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await Client.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoadoutEntry[]);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoadoutEntry[]);
                         }
                     }
                 }
@@ -1135,28 +1146,28 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
                 Companion: {
                     path: "/lol-cosmetics/v1/selection/companion",
                     async put(id: number) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.put(this.path, id, { headers: { "content-type": "application/json" } });
+                        return await HasagiClient.Instance!.httpClient.put(this.path, id, { headers: { "content-type": "application/json" } });
                     }
                 },
                 TftDamageSkin: {
                     path: "/lol-cosmetics/v1/selection/tft-damage-skin",
                     async put(id: number) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.put(this.path, id, { headers: { "content-type": "application/json" } });
+                        return await HasagiClient.Instance!.httpClient.put(this.path, id, { headers: { "content-type": "application/json" } });
                     }
                 },
                 TftMapSkin: {
                     path: "/lol-cosmetics/v1/selection/tft-map-skin",
                     async put(id: number) {
-                        if (Client.Instance!.httpClient === null)
+                        if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await Client.Instance!.httpClient.put(this.path, id, { headers: { "content-type": "application/json" } });
+                        return await HasagiClient.Instance!.httpClient.put(this.path, id, { headers: { "content-type": "application/json" } });
                     }
                 }
             }
@@ -1169,7 +1180,7 @@ export default class Client extends TypedEmitter<Hasagi.ClientEvents> {
     request<ResponseDataType = any, ResponseType = AxiosResponse<ResponseDataType, any>, BodyType = any>(config: AxiosRequestConfig<BodyType>) {
         if (this.httpClient === null)
             throwNotConnectedError();
-            
+
         return this.httpClient.request<ResponseDataType, ResponseType, BodyType>(config);
     }
 }
