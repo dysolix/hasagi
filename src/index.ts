@@ -3,8 +3,6 @@ import HasagiClient from "./client.js";
 import RunePage from "./Classes/RunePage";
 import ChampSelectSession from "./Classes/ChampSelectSession";
 import * as Constants from "./constants.js"
-import { GAME_MODES, GAME_TYPES, MAPS, QUEUES, LAST_UPDATED as GAME_CONSTANTS_LAST_UPDATED } from "./game-constants.js";
-import { httpGet } from "./util.js";
 
 export default HasagiClient;
 export { HasagiClient, RunePage, ChampSelectSession, Constants, GameConstants, DataDragon }
@@ -223,7 +221,7 @@ declare global {
                 E: LiveClientAbility,
                 R: LiveClientAbility,
             }
-    
+
             type LiveClientActivePlayer = {
                 abilities: LiveClientActivePlayerAbilities;
                 championStats: LiveClientChampionStats;
@@ -232,7 +230,7 @@ declare global {
                 level: number;
                 summonerName: string;
             }
-    
+
             type LiveClientActivePlayerRunes = {
                 keystone: LiveClientKeystone;
                 primaryRuneTree: LiveClientRuneTree;
@@ -240,13 +238,13 @@ declare global {
                 generalRunes: LiveClientRuneTree[];
                 statRunes: LiveClientStatRune[];
             }
-    
+
             type LiveClientStatRune = {
                 id: number;
                 rawDescription: string;
             }
-    
-    
+
+
             type LiveClientChampionStats = {
                 abilityHaste: number;
                 abilityPower: number;
@@ -278,21 +276,21 @@ declare global {
                 spellVamp: number;
                 tenacity: number;
             }
-    
+
             type LiveClientRuneTree = {
                 displayName: string;
                 id: number;
                 rawDescription: string;
                 rawDisplayName: string;
             }
-    
+
             type LiveClientKeystone = {
                 displayName: string;
                 id: number;
                 rawDescription: string;
                 rawDisplayName: string;
             }
-    
+
             type LiveClientGameData = {
                 gameMode: string;
                 gameTime: number;
@@ -300,7 +298,7 @@ declare global {
                 mapNumber: number;
                 mapTerrain: string;
             }
-    
+
             type LiveClientPlayer = {
                 championName: string;
                 isBot: boolean;
@@ -317,18 +315,18 @@ declare global {
                 summonerSpells: LiveClientSummonerSpells;
                 team: string;
             }
-    
+
             type LiveClientMainRunes = {
                 keystone: LiveClientKeystone;
                 primaryRuneTree: LiveClientRuneTree;
                 secondaryRuneTree: LiveClientRuneTree;
             }
-    
+
             type LiveClientSummonerSpells = {
                 summonerSpellOne: LiveClientSummonerSpell;
                 summonerSpellTwo: LiveClientSummonerSpell;
             }
-    
+
             type LiveClientPlayerItem = {
                 canUse: boolean;
                 consumable: boolean;
@@ -340,14 +338,14 @@ declare global {
                 rawDisplayName: string;
                 slot: number;
             }
-    
+
             type LiveClientPassiveAbility = {
                 displayName: string;
                 id: string;
                 rawDescription: string;
                 rawDisplayName: string;
             }
-    
+
             type LiveClientAbility = {
                 abilityLevel: number;
                 displayName: string;
@@ -355,7 +353,7 @@ declare global {
                 rawDescription: string;
                 rawDisplayName: string;
             }
-    
+
             type LiveClientScore = {
                 assists: number;
                 creepScore: number;
@@ -363,13 +361,13 @@ declare global {
                 kills: number;
                 wardScore: number;
             }
-    
+
             type LiveClientSummonerSpell = {
                 displayName: string;
                 rawDescription: string;
                 rawDisplayName: string;
             }
-    
+
             type LiveClientData = {
                 activePlayer: LiveClientActivePlayer,
                 allPlayers: LiveClientPlayer[],
@@ -378,41 +376,41 @@ declare global {
                 },
                 gameData: LiveClientGameData
             }
-    
+
             type LiveClientEvent = LiveClientGameStartEvent | LiveClientMinionsSpawningEvent | LiveClientFirstBrickEvent | LiveClientTurretKilledEvent | LiveClientInhibKilledEvent | LiveClientDragonKillEvent | LiveClientHeraldKillEvent | LiveClientBaronKillEvent | LiveClientChampionKillEvent | LiveClientMultikillEvent | LiveClientAceEvent | LiveClientEventBase & { EventName: string, [key: string]: string | number }
-    
+
             type LiveClientEventBase = {
                 EventID: number;
                 EventTime: number;
             }
-    
+
             type LiveClientGameStartEvent = {
                 EventName: "GameStart"
             } & LiveClientEventBase
-    
+
             type LiveClientMinionsSpawningEvent = {
                 EventName: "MinionsSpawning"
             } & LiveClientEventBase
-    
+
             type LiveClientFirstBrickEvent = {
                 EventName: "FirstBrick",
                 KillerName: string
             } & LiveClientEventBase
-    
+
             type LiveClientTurretKilledEvent = {
                 EventName: "TurretKilled"
                 TurretKilled: string,
                 KillerName: string,
                 Assisters: string[]
             } & LiveClientEventBase
-    
+
             type LiveClientInhibKilledEvent = {
                 EventName: "InhibKilled",
                 InhibKilled: string,
                 KillerName: string,
                 Assisters: string[]
             } & LiveClientEventBase
-    
+
             type LiveClientDragonKillEvent = {
                 EventName: "DragonKill",
                 DragonType: string,
@@ -420,34 +418,34 @@ declare global {
                 KillerName: string,
                 Assisters: string[]
             } & LiveClientEventBase
-    
+
             type LiveClientHeraldKillEvent = {
                 EventName: "HeraldKill",
                 Stolen: "False" | "True",
                 KillerName: string,
                 Assisters: string[]
             } & LiveClientEventBase
-    
+
             type LiveClientBaronKillEvent = {
                 EventName: "BaronKill",
                 Stolen: "False" | "True",
                 KillerName: string,
                 Assisters: string[]
             } & LiveClientEventBase
-    
+
             type LiveClientChampionKillEvent = {
                 EventName: "ChampionKill",
                 KillerName: string,
                 VictimName: string,
                 Assisters: string[]
             } & LiveClientEventBase
-    
+
             type LiveClientMultikillEvent = {
                 EventName: "Multikill",
                 KillerName: string,
                 KillStreak: number
             } & LiveClientEventBase
-    
+
             type LiveClientAceEvent = {
                 EventName: "Ace",
                 Acer: string,
@@ -464,7 +462,7 @@ declare global {
                 serverPort: number;
                 visible: boolean;
             }
-    
+
             type PlayerChampionSelection = {
                 championId: number;
                 selectedSkinIndex: number;
@@ -472,7 +470,7 @@ declare global {
                 spell2Id: number;
                 summonerInternalName: string;
             }
-    
+
             type GameTypeConfig = {
                 advancedLearningQuests: boolean;
                 allowTrades: boolean;
@@ -495,7 +493,7 @@ declare global {
                 reroll: boolean;
                 teamChampionPool: boolean;
             }
-    
+
             type Queue = {
                 allowablePremadeSizes: number[];
                 areFreeChampionsAllowed: boolean;
@@ -534,7 +532,7 @@ declare global {
                 spectatorEnabled: boolean;
                 type: string;
             }
-    
+
             type GameCustomization = {
                 GoldenSpatulaClub: string;
                 Regalia: string;
@@ -549,7 +547,7 @@ declare global {
                 wardSkin: string;
                 summonerBanner: string;
             }
-    
+
             type ChampSelectParticipant = {
                 accountId: number;
                 adjustmentFlags: number;
@@ -583,7 +581,7 @@ declare global {
                 timeMatchmakingStart: number;
                 voterRating: number;
             }
-    
+
             type GameData = {
                 gameId: number;
                 gameName: string;
@@ -595,13 +593,13 @@ declare global {
                 teamOne: ChampSelectParticipant[];
                 teamTwo: ChampSelectParticipant[];
             }
-    
+
             type GameDodgeData = {
                 dodgeIds: any[];
                 phase: string;
                 state: string;
             }
-    
+
             type Map = {
                 assets: any;
                 categorizedContentBundles: any;
@@ -620,7 +618,7 @@ declare global {
                 platformName: string;
                 properties: any;
             }
-    
+
             type SessionData = {
                 gameClient: GameClient;
                 gameData: GameData;
@@ -628,15 +626,88 @@ declare global {
                 map: Map;
                 phase: Phase;
             }
-    
+
             type Phase = "None" | "Lobby" | "Matchmaking" | "CheckedIntoTournament" | "ReadyCheck" | "ChampSelect" | "GameStart" | "FailedToLaunch" | "InProgress" | "Reconnect" | "WaitingForStats" | "PreEndOfGame" | "EndOfGame" | "TerminatedInError"
+        }
+
+        namespace ChampSelect {
+            interface Session {
+                actions: Action[][];
+                allowBattleBoost: boolean;
+                allowDuplicatePicks: boolean;
+                allowLockedEvents: boolean;
+                allowRerolling: boolean;
+                allowSkinSelection: boolean;
+                benchChampionIds: number[];
+                benchEnabled: boolean;
+                boostableSkinCount: number;
+                chatDetails: {
+                    chatRoomName: string,
+                    chatRoomPassword: string
+                };
+                counter: number;
+                entitledFeatureState: {
+                    additionalRerolls: number,
+                    unlockedSkinIds: number[]
+                };
+                gameId: number;
+                hasSimultaneousBans: boolean;
+                hasSimultaneousPicks: boolean;
+                isSpectating: boolean;
+                localPlayerCellId: number;
+                lockedEventIndex: number;
+                myTeam: TeamMember[];
+                recoveryCounter: number;
+                rerollsRemaining: number;
+                skipChampionSelect: boolean;
+                theirTeam: TeamMember[];
+                timer: {
+                    adjustedTimeLeftInPhase: number,
+                    internalNowInEpochMs: number,
+                    isInfinite: true,
+                    phase: string,
+                    totalTimeInPhase: number
+                };
+                trades: {
+                    cellId: number,
+                    id: number,
+                    state: string
+                }[];
+            }
+
+            type Phase = null | 'PLANNING' | 'BAN_PICK' | 'FINALIZATION';
+
+            type Action = {
+                actorCellId: number;
+                championId: number;
+                completed: boolean;
+                id: number;
+                isAllyAction: boolean;
+                isInProgress: boolean;
+                type: "ban" | "pick" | "ten_bans_reveal";
+            }
+
+            type TeamMember = {
+                assignedPosition: string,
+                cellId: number,
+                championId: number,
+                championPickIntent: number,
+                entitledFeatureType: string,
+                playerType: string,
+                selectedSkinId: number,
+                spell1Id: number,
+                spell2Id: number,
+                summonerId: number,
+                team: number,
+                wardSkinId: number
+            }
         }
 
         interface ClientEvents {
             "connection-state-change": (state: boolean) => void;
             "lcu-event": (event: [opcode: number, name: string, data: { eventType: string; uri: string; data: any; }]) => void;
-            "champ-select-session-update": () => void;
-            "champ-select-phase-change": (previousPhase: Hasagi.ChampSelectPhase, phase: Hasagi.ChampSelectPhase) => void;
+            "champ-select-session-update": (oldSessionData: ChampSelect.Session | null, newSessionData: ChampSelect.Session | null) => void;
+            "champ-select-phase-change": (previousPhase: Hasagi.ChampSelect.Phase, phase: Hasagi.ChampSelect.Phase) => void;
             "champ-select-local-player-ban": () => void;
             "champ-select-local-player-pick": () => void;
             "champ-select-local-player-pick-completed": (championKey: string) => void;
@@ -644,11 +715,12 @@ declare global {
             "gameflow-session-update": (oldSessionData: Hasagi.GameflowSession.SessionData | null, newSessionData: Hasagi.GameflowSession.SessionData | null) => void;
             "gameflow-session-phase-update": (prevPhase: Hasagi.GameflowSession.Phase, newPhase: Hasagi.GameflowSession.Phase) => void;
             "champ-select-champion-intent-change": (summonerId: number, previousChampionIntent: number, championIntent: number) => void;
-            "champ-select-summoner-order-change": (order: string[]) => void;
+            //"champ-select-summoner-order-change": (order: string[]) => void;
         }
 
-        type LanguageCode = "en_US" | "cs_CZ" | "de_DE" | "el_GR" | "en_AU" | "en_GB" | "en_PH" | "en_SG" | "es_AR" | "es_ES" | "es_MX" | "fr_FR" | "hu_HU" | "id_ID" | "it_IT" | "ja_JP" | "ko_KR" | "pl_PL" | "pt_BR" | "ro_RO" | "ru_RU" | "th_TH" | "tr_TR" | "vn_VN" | "zh_CN" | "zh_MY" | "zh_TW";
-        type ServerRegion = "euw" | "eune" | "br" | "lan" | "las" | "na" | "oce" | "ru" | "jp" | "tr" | "kr" | "pbe";
+		/* Generated on 2023-06-27T23:14:05.965Z */
+		type LanguageCode = "en_US" | "cs_CZ" | "de_DE" | "el_GR" | "en_AU" | "en_GB" | "en_PH" | "en_SG" | "es_AR" | "es_ES" | "es_MX" | "fr_FR" | "hu_HU" | "it_IT" | "ja_JP" | "ko_KR" | "pl_PL" | "pt_BR" | "ro_RO" | "ru_RU" | "th_TH" | "tr_TR" | "vi_VN" | "zh_CN" | "zh_MY" | "zh_TW"
+		type ServerRegion = "br" | "eune" | "euw" | "garena" | "jp" | "kr" | "lan" | "las" | "na" | "oce" | "pbe" | "ph" | "ru" | "sg" | "tencent" | "th" | "tr" | "tw" | "vn"
 
         type ImageData = {
             full: string;
@@ -687,9 +759,7 @@ declare global {
             timeInQueue: number;
         }
 
-        type RunePage = import("./Classes/RunePage").default;
-
-        interface ClientRunePage {
+        interface RunePage {
             autoModifiedSelections: any[];
             current: boolean;
             id: number;
@@ -703,79 +773,6 @@ declare global {
             selectedPerkIds: number[];
             primaryStyleId: number;
             subStyleId: number;
-        }
-
-        type ChampSelectSession = import("./Classes/ChampSelectSession").default;
-
-        type ChampSelectPhase = null | 'PLANNING' | 'BAN_PICK' | 'FINALIZATION';
-
-        interface IChampSelectSession {
-            actions: ChampSelectAction[][];
-            allowBattleBoost: boolean;
-            allowDuplicatePicks: boolean;
-            allowLockedEvents: boolean;
-            allowRerolling: boolean;
-            allowSkinSelection: boolean;
-            benchChampionIds: number[];
-            benchEnabled: boolean;
-            boostableSkinCount: number;
-            chatDetails: {
-                chatRoomName: string,
-                chatRoomPassword: string
-            };
-            counter: number;
-            entitledFeatureState: {
-                additionalRerolls: number,
-                unlockedSkinIds: number[]
-            };
-            gameId: number;
-            hasSimultaneousBans: boolean;
-            hasSimultaneousPicks: boolean;
-            isSpectating: boolean;
-            localPlayerCellId: number;
-            lockedEventIndex: number;
-            myTeam: ChampSelectTeamMember[];
-            recoveryCounter: number;
-            rerollsRemaining: number;
-            skipChampionSelect: boolean;
-            theirTeam: ChampSelectTeamMember[];
-            timer: {
-                adjustedTimeLeftInPhase: number,
-                internalNowInEpochMs: number,
-                isInfinite: true,
-                phase: string,
-                totalTimeInPhase: number
-            };
-            trades: {
-                cellId: number,
-                id: number,
-                state: string
-            }[];
-        }
-
-        type ChampSelectAction = {
-            actorCellId: number;
-            championId: number;
-            completed: boolean;
-            id: number;
-            isAllyAction: boolean;
-            isInProgress: boolean;
-            type: "ban" | "pick" | "ten_bans_reveal";
-        }
-
-        type ChampSelectTeamMember = {
-            assignedPosition: string,
-            cellId: number,
-            championId: number,
-            championPickIntent: number,
-            entitledFeatureType: string,
-            playerType: string,
-            selectedSkinId: number,
-            spell1Id: number,
-            spell2Id: number,
-            summonerId: number,
-            team: number,
-            wardSkinId: number
         }
 
         type RankedEntry = {
@@ -970,6 +967,64 @@ declare global {
                 inventoryType: "WARD_SKIN",
                 itemId: number
             };
+        }
+
+        namespace LoLChampionsV1 {
+            interface Ownership {
+                loyaltyReward: boolean;
+                owned: boolean;
+                rental: {
+                    endDate: number;
+                    purchaseDate: number;
+                    rented: boolean;
+                    winCountRemaining: number;
+                };
+                xboxGPReward: boolean;
+            }
+
+            interface SkinMinimal {
+                championId: number;
+                chromaPath: string | null;
+                disabled: boolean;
+                id: number;
+                isBase: boolean;
+                lastSelected: boolean;
+                name: string;
+                ownership: Ownership;
+                splashPath: string;
+                stillObtainable: boolean;
+                tilePath: string;
+            }
+
+            interface ChampionMinimal {
+                active: boolean;
+                alias: string;
+                banVoPath: string;
+                baseLoadScreenPath: string;
+                baseSplashPath: string;
+                botEnabled: boolean;
+                chooseVoPath: string;
+                disabledQueues: string[];
+                freeToPlay: boolean;
+                id: number;
+                name: string;
+                ownership: Ownership;
+                purchased: number;
+                rankedPlayEnabled: boolean;
+                roles: string[];
+                squarePortraitPath: string;
+                stingerSfxPath: string;
+                title: string;
+            }
+        }
+
+        namespace RiotClient {
+            interface RegionLocale {
+                locale: string;
+                region: string;
+                webLanguage: string;
+                webRegion: string;
+            }
         }
     }
 }

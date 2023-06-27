@@ -1,6 +1,6 @@
 import { HasagiClient, DataDragon } from "../index.js";
 
-export default class RunePage {
+export default class RunePage implements Hasagi.RunePage {
     autoModifiedSelections: any[];
     current: boolean;
     id: number;
@@ -15,7 +15,7 @@ export default class RunePage {
     primaryStyleId: number;
     subStyleId: number;
 
-    constructor(data: Hasagi.ClientRunePage | any = {}) {
+    constructor(data: Hasagi.RunePage | any = {}) {
         this.autoModifiedSelections = data?.autoModifiedSelections ?? [];
         this.current = data?.current ?? true;
         this.id = data?.id ?? 0;

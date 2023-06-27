@@ -116,7 +116,7 @@ const DataDragon = {
 
     //loadAllGameTypes,
     //getAllGameTypes,
-}
+} as const;
 
 const GameConstants = {
     QUEUES,

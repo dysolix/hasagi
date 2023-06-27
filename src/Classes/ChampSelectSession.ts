@@ -1,8 +1,8 @@
-export default class ChampSelectSession implements Hasagi.IChampSelectSession {
+export default class ChampSelectSession implements Hasagi.ChampSelect.Session {
     ownBanActionId: number;
     ownPickActionId: number;
     inProgressActionIds: number[];
-    actions: Hasagi.ChampSelectAction[][];
+    actions: Hasagi.ChampSelect.Action[][];
     allowBattleBoost: boolean;
     allowDuplicatePicks: boolean;
     allowLockedEvents: boolean;
@@ -20,15 +20,15 @@ export default class ChampSelectSession implements Hasagi.IChampSelectSession {
     isSpectating: boolean;
     localPlayerCellId: number;
     lockedEventIndex: number;
-    myTeam: Hasagi.ChampSelectTeamMember[];
+    myTeam: Hasagi.ChampSelect.TeamMember[];
     recoveryCounter: number;
     rerollsRemaining: number;
     skipChampionSelect: boolean;
-    theirTeam: Hasagi.ChampSelectTeamMember[];
+    theirTeam: Hasagi.ChampSelect.TeamMember[];
     timer: { adjustedTimeLeftInPhase: number; internalNowInEpochMs: number; isInfinite: true; phase: string; totalTimeInPhase: number; };
     trades: { cellId: number; id: number; state: string; }[];
 
-    constructor(data: Hasagi.IChampSelectSession) {
+    constructor(data: Hasagi.ChampSelect.Session) {
         this.ownBanActionId = -1;
         this.ownPickActionId = -1;
         this.inProgressActionIds = [];
@@ -97,7 +97,7 @@ export default class ChampSelectSession implements Hasagi.IChampSelectSession {
         return banned;
     }
 
-    getPhase(): Hasagi.ChampSelectPhase {
+    getPhase(): Hasagi.ChampSelect.Phase {
         return this.timer.phase as any;
     }
 

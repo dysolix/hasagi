@@ -164,32 +164,32 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         let data = value.data;
 
         switch (uri) {
-            case this.LCUEndpoints.LobbyTeamBuilder.ChampSelect.Session.path: {
+            case this.LCUEndpoints.LobbyTeamBuilder.ChampSelectV1.Session.path: {
                 this.onTeamBuilderChampSelectSessionUpdate(eventType, data);
                 break;
             }
 
-            case this.LCUEndpoints.Perks.Pages.path: {
+            case this.LCUEndpoints.PerksV1.Pages.path: {
                 this.onPerksPagesUpdate(eventType, data);
                 break;
             }
 
-            case this.LCUEndpoints.Perks.CurrentPage.path: {
+            case this.LCUEndpoints.PerksV1.CurrentPage.path: {
                 this.onPerksCurrentPageUpdate(eventType, data);
                 break;
             }
 
-            case this.LCUEndpoints.Gameflow.Session.path: {
+            case this.LCUEndpoints.GameflowV1.Session.path: {
                 this.onGameflowSessionUpdate(eventType, data);
                 break;
             }
 
-            case this.LCUEndpoints.LobbyTeamBuilder.ChampSelect.CurrentChampion.path: {
+            case this.LCUEndpoints.LobbyTeamBuilder.ChampSelectV1.CurrentChampion.path: {
                 this.onTeamBuilderChampSelectCurrentChampionUpdate(eventType, data);
                 break;
             }
 
-            case this.LCUEndpoints.LobbyTeamBuilder.ChampSelect.PickableSkinIds.path: {
+            case this.LCUEndpoints.LobbyTeamBuilder.ChampSelectV1.PickableSkinIds.path: {
                 this.onTeamBuilderChampSelectPickableSkinIdsUpdate(eventType, data);
                 break;
             }
@@ -207,7 +207,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         if (this.httpClient === null)
             throwNotConnectedError();
 
-        return this.LCUEndpoints.Gameflow.Session.get();
+        return this.LCUEndpoints.GameflowV1.Session.get();
     }
 
     //#region Ready Check
@@ -298,7 +298,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         if (this.httpClient === null)
             throwNotConnectedError();
 
-        return this.LCUEndpoints.Perks.Pages.get();
+        return this.LCUEndpoints.PerksV1.Pages.get();
     }
 
     /**
@@ -313,7 +313,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
      * @param id The rune page's id
      */
     setActiveRunePage(id: number | string) {
-        return this.LCUEndpoints.Perks.CurrentPage.put(Number(id));
+        return this.LCUEndpoints.PerksV1.CurrentPage.put(Number(id));
     }
 
     /**  
@@ -321,7 +321,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
      * @param id The rune page's id
      */
     deleteRunePage(id: number | string) {
-        return this.LCUEndpoints.Perks.Pages.WithId.delete(Number(id));
+        return this.LCUEndpoints.PerksV1.Pages.WithId.delete(Number(id));
     }
 
     async replaceRunePage(id: number, runePage: RunePage) {
@@ -348,7 +348,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         if (!(page instanceof RunePage))
             page = await RunePage.Create(page.name, page.runes, page.primaryRuneTree, page.secondaryRuneTree);
 
-        await this.LCUEndpoints.Perks.Pages.post(page);
+        await this.LCUEndpoints.PerksV1.Pages.post(page);
     }
 
     /**
@@ -493,15 +493,16 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
 
     private onTeamBuilderChampSelectSessionUpdate(eventType: string, data: any) {
         if (eventType === "Delete") {
+            const oldSession = this.champSelectSession;
             this.champSelectSession = null;
-            this.emit("champ-select-session-update");
+            this.emit("champ-select-session-update", oldSession, null);
             return;
         }
 
         let oldSessionData = this.champSelectSession;
         let newSessionData = new ChampSelectSession(data);
         this.champSelectSession = newSessionData;
-        this.emit("champ-select-session-update");
+        this.emit("champ-select-session-update", oldSessionData, newSessionData);
 
         if (oldSessionData !== null) {
             if (newSessionData.getPhase() !== oldSessionData.getPhase()) {
@@ -607,10 +608,10 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
      */
     LCUEndpoints = {
         LobbyTeamBuilder: {
-            ChampSelect: {
+            ChampSelectV1: {
                 Session: {
                     path: "/lol-lobby-team-builder/champ-select/v1/session",
-                    async get(): Promise<Hasagi.IChampSelectSession> {
+                    async get(): Promise<Hasagi.ChampSelect.Session> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
@@ -754,7 +755,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 }
             }
         },
-        Perks: {
+        PerksV1: {
             CurrentPage: {
                 path: "/lol-perks/v1/currentpage",
                 async get() {
@@ -892,7 +893,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 }
             }
         },
-        Gameflow: {
+        GameflowV1: {
             ActivePatcherLock: {
                 path: "/lol-gameflow/v1/active-patcher-lock",
                 async get() {
@@ -1054,7 +1055,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 }
             }
         },
-        Ranked: {
+        RankedV1: {
             CurrentRankedStats: {
                 path: "/lol-ranked/v1/current-ranked-stats",
                 async get(): Promise<Hasagi.CurrentRankData> {
@@ -1065,7 +1066,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 }
             }
         },
-        Summoner: {
+        SummonerV1: {
             CurrentSummoner: {
                 path: "/lol-summoner/v1/current-summoner",
                 async get() {
@@ -1096,11 +1097,12 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 }
             }
         },
-        Loadouts: {
+        LoadoutsV1: {
             LoadoutsReady: {
                 path: "/lol-loadouts/v1/loadouts-ready",
-
             },
+        },
+        LoadoutsV4: {
             Loadouts: {
                 path: "/lol-loadouts/v4/loadouts",
                 WithId: {
@@ -1143,7 +1145,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 }
             }
         },
-        Cosmetics: {
+        CosmeticsV1: {
             Selection: {
                 Companion: {
                     path: "/lol-cosmetics/v1/selection/companion",
@@ -1173,8 +1175,43 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                     }
                 }
             }
+        },
+        ChampionsV1: {
+            Inventories: {
+                WithSummonerId: {
+                    SkinsMinimal: {
+                        getPath: (summonerId: string | number) => `/lol-champions/v1/inventories/${summonerId}/skins-minimal`,
+                        async get(summonerId: string | number) {
+                            if (HasagiClient.Instance!.httpClient === null)
+                                throwNotConnectedError();
+
+                            return await HasagiClient.Instance!.httpClient.get(this.getPath(summonerId)).then(res => res.data as Hasagi.LoLChampionsV1.SkinMinimal[]);
+                        }
+                    }
+                }
+            },
+            OwnedChampionsMinimal: {
+                path: "/lol-champions/v1/owned-champions-minimal",
+                async get() {
+                    if (HasagiClient.Instance!.httpClient === null)
+                        throwNotConnectedError();
+
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLChampionsV1.ChampionMinimal[]);
+                }
+            }
+        },
+        RiotClient: {
+            GetRegionLocale: {
+                path: "/riotclient/get_region_locale",
+                async get() {
+                    if (HasagiClient.Instance!.httpClient === null)
+                        throwNotConnectedError();
+
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.RiotClient.RegionLocale);
+                }
+            }
         }
-    }
+    } as const
 
     /**
      * Send a request to the League of Legends client. Authentication is automatically included and the base url is already set.
