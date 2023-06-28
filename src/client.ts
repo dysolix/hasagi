@@ -39,7 +39,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     /**
      * @param autoReconnect Determines if the client should automatically try to reconnect if the connection closes. Defaults to true.
      */
-    private constructor(autoReconnect = true) {
+    public constructor(autoReconnect = true) {
         super();
 
         this.autoReconnect = autoReconnect;
