@@ -6,7 +6,7 @@ import RunePage from "./Classes/RunePage.js";
 import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
 import find from "find-process";
-import { Hasagi } from "./types.js";
+import type { Hasagi } from "./types";
 
 export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     public static Instance: HasagiClient | null = null;
