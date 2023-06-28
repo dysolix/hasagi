@@ -82,7 +82,7 @@ const DataDragon = {
         return latest;
     },
 
-    async loadAllData(options: Hasagi.DataDragon.LoadOptions) {
+    async loadAllData(options?: Hasagi.DataDragon.LoadOptions) {
         return await Promise.all([
             loadAllChampions(options),
             loadAllSummonerSpells(options),
