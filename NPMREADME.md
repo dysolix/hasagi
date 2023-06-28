@@ -18,3 +18,4 @@ Hasagi Library Changelog
 (0.3.6) The Hasagi namespace is no longer declared globally, but instead exported; Added LANGUAGE_CODES and SERVER_REGIONS to Constants
 (0.3.7) HasagiClient's constructor is public again
 (0.3.8) Fixed missing types
+(0.3.9) Finished reorganization of types

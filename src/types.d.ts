@@ -443,7 +443,16 @@ export namespace Hasagi {
         } & LiveClientEventBase
     }
 
-    export namespace GameflowSession {
+    export namespace RiotClient {
+        export interface RegionLocale {
+            locale: string;
+            region: string;
+            webLanguage: string;
+            webRegion: string;
+        }
+    }
+
+    export namespace LoLGameflow {
         export type GameClient = {
             observerServerIp: string;
             observerServerPort: number;
@@ -620,345 +629,196 @@ export namespace Hasagi {
         export type Phase = "None" | "Lobby" | "Matchmaking" | "CheckedIntoTournament" | "ReadyCheck" | "ChampSelect" | "GameStart" | "FailedToLaunch" | "InProgress" | "Reconnect" | "WaitingForStats" | "PreEndOfGame" | "EndOfGame" | "TerminatedInError"
     }
 
-    export namespace ChampSelect {
-        export interface Session {
-            actions: Action[][];
-            allowBattleBoost: boolean;
-            allowDuplicatePicks: boolean;
-            allowLockedEvents: boolean;
-            allowRerolling: boolean;
-            allowSkinSelection: boolean;
-            benchChampionIds: number[];
-            benchEnabled: boolean;
-            boostableSkinCount: number;
-            chatDetails: {
-                chatRoomName: string,
-                chatRoomPassword: string
-            };
-            counter: number;
-            entitledFeatureState: {
-                additionalRerolls: number,
-                unlockedSkinIds: number[]
-            };
-            gameId: number;
-            hasSimultaneousBans: boolean;
-            hasSimultaneousPicks: boolean;
-            isSpectating: boolean;
-            localPlayerCellId: number;
-            lockedEventIndex: number;
-            myTeam: TeamMember[];
-            recoveryCounter: number;
-            rerollsRemaining: number;
-            skipChampionSelect: boolean;
-            theirTeam: TeamMember[];
-            timer: {
-                adjustedTimeLeftInPhase: number,
-                internalNowInEpochMs: number,
-                isInfinite: true,
-                phase: string,
-                totalTimeInPhase: number
-            };
-            trades: {
+    export namespace LoLLobbyTeamBuilder {
+        export namespace ChampSelect {
+            export interface Session {
+                actions: Action[][];
+                allowBattleBoost: boolean;
+                allowDuplicatePicks: boolean;
+                allowLockedEvents: boolean;
+                allowRerolling: boolean;
+                allowSkinSelection: boolean;
+                benchChampionIds: number[];
+                benchEnabled: boolean;
+                boostableSkinCount: number;
+                chatDetails: {
+                    chatRoomName: string,
+                    chatRoomPassword: string
+                };
+                counter: number;
+                entitledFeatureState: {
+                    additionalRerolls: number,
+                    unlockedSkinIds: number[]
+                };
+                gameId: number;
+                hasSimultaneousBans: boolean;
+                hasSimultaneousPicks: boolean;
+                isSpectating: boolean;
+                localPlayerCellId: number;
+                lockedEventIndex: number;
+                myTeam: TeamMember[];
+                recoveryCounter: number;
+                rerollsRemaining: number;
+                skipChampionSelect: boolean;
+                theirTeam: TeamMember[];
+                timer: {
+                    adjustedTimeLeftInPhase: number,
+                    internalNowInEpochMs: number,
+                    isInfinite: true,
+                    phase: string,
+                    totalTimeInPhase: number
+                };
+                trades: {
+                    cellId: number,
+                    id: number,
+                    state: string
+                }[];
+            }
+
+            export type Phase = null | 'PLANNING' | 'BAN_PICK' | 'FINALIZATION';
+
+            export type Action = {
+                actorCellId: number;
+                championId: number;
+                completed: boolean;
+                id: number;
+                isAllyAction: boolean;
+                isInProgress: boolean;
+                type: "ban" | "pick" | "ten_bans_reveal";
+            }
+
+            export type TeamMember = {
+                assignedPosition: string,
                 cellId: number,
-                id: number,
-                state: string
-            }[];
-        }
-
-        export type Phase = null | 'PLANNING' | 'BAN_PICK' | 'FINALIZATION';
-
-        export type Action = {
-            actorCellId: number;
-            championId: number;
-            completed: boolean;
-            id: number;
-            isAllyAction: boolean;
-            isInProgress: boolean;
-            type: "ban" | "pick" | "ten_bans_reveal";
-        }
-
-        export type TeamMember = {
-            assignedPosition: string,
-            cellId: number,
-            championId: number,
-            championPickIntent: number,
-            entitledFeatureType: string,
-            playerType: string,
-            selectedSkinId: number,
-            spell1Id: number,
-            spell2Id: number,
-            summonerId: number,
-            team: number,
-            wardSkinId: number
+                championId: number,
+                championPickIntent: number,
+                entitledFeatureType: string,
+                playerType: string,
+                selectedSkinId: number,
+                spell1Id: number,
+                spell2Id: number,
+                summonerId: number,
+                team: number,
+                wardSkinId: number
+            }
         }
     }
 
-    export interface ClientEvents {
-        "connection-state-change": (state: boolean) => void;
-        "lcu-event": (event: [opcode: number, name: string, data: { eventType: string; uri: string; data: any; }]) => void;
-        "champ-select-session-update": (oldSessionData: ChampSelect.Session | null, newSessionData: ChampSelect.Session | null) => void;
-        "champ-select-phase-change": (previousPhase: Hasagi.ChampSelect.Phase, phase: Hasagi.ChampSelect.Phase) => void;
-        "champ-select-local-player-ban": () => void;
-        "champ-select-local-player-pick": () => void;
-        "champ-select-local-player-pick-completed": (championKey: string) => void;
-        "rune-pages-updated": () => void;
-        "gameflow-session-update": (oldSessionData: Hasagi.GameflowSession.SessionData | null, newSessionData: Hasagi.GameflowSession.SessionData | null) => void;
-        "gameflow-session-phase-update": (prevPhase: Hasagi.GameflowSession.Phase, newPhase: Hasagi.GameflowSession.Phase) => void;
-        "champ-select-champion-intent-change": (summonerId: number, previousChampionIntent: number, championIntent: number) => void;
-        //"champ-select-summoner-order-change": (order: string[]) => void;
+    export namespace LoLLoadout {
+        export type LoadoutEntry = {
+            id: string;
+            itemId?: any;
+            loadout: Loadout;
+            name: string;
+            refreshTime: string;
+            scope: string;
+        }
+
+        export type Loadout = {
+            COMPANION_SLOT: {
+                contentId: string,
+                inventoryType: "COMPANION",
+                itemId: number
+            };
+            EMOTES_ACE: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_FIRST_BLOOD: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_START: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_VICTORY: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_CENTER: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_LOWER_LEFT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_LOWER_RIGHT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_UPPER_LEFT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_UPPER_RIGHT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_LEFT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_LOWER: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_RIGHT: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            EMOTES_WHEEL_UPPER: {
+                contentId: string,
+                inventoryType: "EMOTE",
+                itemId: number
+            };
+            REGALIA_BANNER_SLOT: {
+                contentId: string,
+                inventoryType: "REGALIA_BANNER",
+                itemId: number
+            };
+            REGALIA_CREST_SLOT: {
+                contentId: string,
+                inventoryType: "REGALIA_CREST",
+                itemId: number
+            };
+            TFT_DAMAGE_SKIN_SLOT: {
+                contentId: string,
+                inventoryType: "TFT_DAMAGE_SKIN",
+                itemId: number
+            };
+            TFT_MAP_SKIN_SLOT: {
+                contentId: string,
+                inventoryType: "TFT_MAP_SKIN",
+                itemId: number
+            };
+            TOURNAMENT_TROPHY: {
+                contentId: string,
+                inventoryType: "TOURNAMENT_TROPHY",
+                itemId: number
+            };
+            WARD_SKIN_SLOT: {
+                contentId: string,
+                inventoryType: "WARD_SKIN",
+                itemId: number
+            };
+        }
     }
 
-    export type LanguageCode = typeof import("./constants.js")["LANGUAGE_CODES"][number]
-    export type ServerRegion = typeof import("./constants.js")["SERVER_REGIONS"][number]
-
-    export type ImageData = {
-        full: string;
-        sprite: string;
-        group: string;
-        x: number;
-        y: number;
-        w: number;
-        h: number;
-    };
-
-    export type MatchmakingData = {
-        dodgeData: {
-            dodgerId: number;
-            state: string;
-        };
-        errors: any[];
-        estimatedQueueTime: number;
-        isCurrentlyInQueue: boolean;
-        lobbyId: string;
-        lowPriorityData: {
-            bustedLeaverAccessToken: string;
-            penalizedSummonerIds: any[];
-            penaltyTime: number;
-            penaltyTimeRemaining: number;
-        };
-        queueId: number;
-        readyCheck: {
-            declinerIds: number[];
-            dodgeWarning: string;
-            playerResponse: string;
-            state: string;
-            timer: number;
-        };
-        searchState: string;
-        timeInQueue: number;
-    }
-
-    export interface RunePage {
-        autoModifiedSelections: any[];
-        current: boolean;
-        id: number;
-        isActive: boolean;
-        isDeletable: boolean;
-        isEditable: boolean;
-        isValid: boolean;
-        lastModified: number;
-        name: string;
-        order: number;
-        selectedPerkIds: number[];
-        primaryStyleId: number;
-        subStyleId: number;
-    }
-
-    export type RankedEntry = {
-        division: string;
-        isProvisional: boolean;
-        leaguePoints: number;
-        losses: number;
-        miniSeriesProgress: string;
-        previousSeasonAchievedDivision: string;
-        previousSeasonAchievedTier: string;
-        previousSeasonEndDivision: string;
-        previousSeasonEndTier: string;
-        provisionalGameThreshold: number;
-        provisionalGamesRemaining: number;
-        queueType: string;
-        ratedRating: number;
-        ratedTier: string;
-        tier: string;
-        warnings?: any;
-        wins: number;
-    }
-
-    export type SeasonData = {
-        currentSeasonEnd: number;
-        currentSeasonId: number;
-        nextSeasonStart: number;
-    }
-
-    export type CurrentRankData = {
-        earnedRegaliaRewardIds: any[];
-        highestPreviousSeasonAchievedDivision: string;
-        highestPreviousSeasonAchievedTier: string;
-        highestPreviousSeasonEndDivision: string;
-        highestPreviousSeasonEndTier: string;
-        highestRankedEntry: RankedEntry;
-        highestRankedEntrySR: RankedEntry;
-        queueMap: {
-            RANKED_FLEX_SR: RankedEntry;
-            RANKED_SOLO_5x5: RankedEntry;
-            RANKED_TFT: RankedEntry;
-            RANKED_TFT_DOUBLE_UP: RankedEntry;
-            RANKED_TFT_PAIRS: RankedEntry;
-            RANKED_TFT_TURBO: RankedEntry;
-        };
-        queues: RankedEntry[];
-        rankedRegaliaLevel: number;
-        seasons: {
-            RANKED_FLEX_SR: SeasonData;
-            RANKED_SOLO_5x5: SeasonData;
-            RANKED_TFT: SeasonData;
-            RANKED_TFT_DOUBLE_UP: SeasonData;
-            RANKED_TFT_PAIRS: SeasonData;
-            RANKED_TFT_TURBO: SeasonData;
-        };
-        splitsProgress: {
-            1: number;
-            2: number;
-            3: number;
-        };
-    }
-
-    export type Summoner = {
-        accountId: number;
-        displayName: string;
-        internalName: string;
-        nameChangeFlag: boolean;
-        percentCompleteForNextLevel: number;
-        privacy: string;
-        profileIconId: number;
-        puuid: string;
-        rerollPoints: {
-            currentPoints: number;
-            maxRolls: number;
-            numberOfRolls: number;
-            pointsCostToRoll: number;
-            pointsToReroll: number;
-        };
-        summonerId: number;
-        summonerLevel: number;
-        unnamed: boolean;
-        xpSinceLastLevel: number;
-        xpUntilNextLevel: number;
-    }
-
-    export type LoadoutEntry = {
-        id: string;
-        itemId?: any;
-        loadout: Loadout;
-        name: string;
-        refreshTime: string;
-        scope: string;
-    }
-
-    export type Loadout = {
-        COMPANION_SLOT: {
-            contentId: string,
-            inventoryType: "COMPANION",
-            itemId: number
-        };
-        EMOTES_ACE: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_FIRST_BLOOD: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_START: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_VICTORY: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_CENTER: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_LOWER_LEFT: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_LOWER_RIGHT: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_UPPER_LEFT: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_UPPER_RIGHT: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_LEFT: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_LOWER: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_RIGHT: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        EMOTES_WHEEL_UPPER: {
-            contentId: string,
-            inventoryType: "EMOTE",
-            itemId: number
-        };
-        REGALIA_BANNER_SLOT: {
-            contentId: string,
-            inventoryType: "REGALIA_BANNER",
-            itemId: number
-        };
-        REGALIA_CREST_SLOT: {
-            contentId: string,
-            inventoryType: "REGALIA_CREST",
-            itemId: number
-        };
-        TFT_DAMAGE_SKIN_SLOT: {
-            contentId: string,
-            inventoryType: "TFT_DAMAGE_SKIN",
-            itemId: number
-        };
-        TFT_MAP_SKIN_SLOT: {
-            contentId: string,
-            inventoryType: "TFT_MAP_SKIN",
-            itemId: number
-        };
-        TOURNAMENT_TROPHY: {
-            contentId: string,
-            inventoryType: "TOURNAMENT_TROPHY",
-            itemId: number
-        };
-        WARD_SKIN_SLOT: {
-            contentId: string,
-            inventoryType: "WARD_SKIN",
-            itemId: number
-        };
-    }
-
-    export namespace LoLChampionsV1 {
+    export namespace LoLChampions {
         export interface Ownership {
             loyaltyReward: boolean;
             owned: boolean;
@@ -1007,12 +867,163 @@ export namespace Hasagi {
         }
     }
 
-    export namespace RiotClient {
-        export interface RegionLocale {
-            locale: string;
-            region: string;
-            webLanguage: string;
-            webRegion: string;
+    export namespace LoLRanked {
+        export type RankedEntry = {
+            division: string;
+            isProvisional: boolean;
+            leaguePoints: number;
+            losses: number;
+            miniSeriesProgress: string;
+            previousSeasonAchievedDivision: string;
+            previousSeasonAchievedTier: string;
+            previousSeasonEndDivision: string;
+            previousSeasonEndTier: string;
+            provisionalGameThreshold: number;
+            provisionalGamesRemaining: number;
+            queueType: string;
+            ratedRating: number;
+            ratedTier: string;
+            tier: string;
+            warnings?: any;
+            wins: number;
+        }
+
+        export type SeasonData = {
+            currentSeasonEnd: number;
+            currentSeasonId: number;
+            nextSeasonStart: number;
+        }
+
+        export type CurrentRankData = {
+            earnedRegaliaRewardIds: any[];
+            highestPreviousSeasonAchievedDivision: string;
+            highestPreviousSeasonAchievedTier: string;
+            highestPreviousSeasonEndDivision: string;
+            highestPreviousSeasonEndTier: string;
+            highestRankedEntry: RankedEntry;
+            highestRankedEntrySR: RankedEntry;
+            queueMap: {
+                RANKED_FLEX_SR: RankedEntry;
+                RANKED_SOLO_5x5: RankedEntry;
+                RANKED_TFT: RankedEntry;
+                RANKED_TFT_DOUBLE_UP: RankedEntry;
+                RANKED_TFT_PAIRS: RankedEntry;
+                RANKED_TFT_TURBO: RankedEntry;
+            };
+            queues: RankedEntry[];
+            rankedRegaliaLevel: number;
+            seasons: {
+                RANKED_FLEX_SR: SeasonData;
+                RANKED_SOLO_5x5: SeasonData;
+                RANKED_TFT: SeasonData;
+                RANKED_TFT_DOUBLE_UP: SeasonData;
+                RANKED_TFT_PAIRS: SeasonData;
+                RANKED_TFT_TURBO: SeasonData;
+            };
+            splitsProgress: {
+                1: number;
+                2: number;
+                3: number;
+            };
         }
     }
+
+    export namespace LoLSummoner {
+        export interface Summoner {
+            accountId: number;
+            displayName: string;
+            internalName: string;
+            nameChangeFlag: boolean;
+            percentCompleteForNextLevel: number;
+            privacy: string;
+            profileIconId: number;
+            puuid: string;
+            rerollPoints: {
+                currentPoints: number;
+                maxRolls: number;
+                numberOfRolls: number;
+                pointsCostToRoll: number;
+                pointsToReroll: number;
+            };
+            summonerId: number;
+            summonerLevel: number;
+            unnamed: boolean;
+            xpSinceLastLevel: number;
+            xpUntilNextLevel: number;
+        }
+    }
+
+    export namespace LoLPerks {
+        export interface RunePage {
+            autoModifiedSelections: any[];
+            current: boolean;
+            id: number;
+            isActive: boolean;
+            isDeletable: boolean;
+            isEditable: boolean;
+            isValid: boolean;
+            lastModified: number;
+            name: string;
+            order: number;
+            selectedPerkIds: number[];
+            primaryStyleId: number;
+            subStyleId: number;
+        }
+    }
+
+    export namespace LoLMatchmaking {
+        export interface MatchmakingData {
+            dodgeData: {
+                dodgerId: number;
+                state: string;
+            };
+            errors: any[];
+            estimatedQueueTime: number;
+            isCurrentlyInQueue: boolean;
+            lobbyId: string;
+            lowPriorityData: {
+                bustedLeaverAccessToken: string;
+                penalizedSummonerIds: any[];
+                penaltyTime: number;
+                penaltyTimeRemaining: number;
+            };
+            queueId: number;
+            readyCheck: {
+                declinerIds: number[];
+                dodgeWarning: string;
+                playerResponse: string;
+                state: string;
+                timer: number;
+            };
+            searchState: string;
+            timeInQueue: number;
+        }
+    }
+
+    export interface ClientEvents {
+        "connection-state-change": (state: boolean) => void;
+        "lcu-event": (event: [opcode: number, name: string, data: { eventType: string; uri: string; data: any; }]) => void;
+        "champ-select-session-update": (oldSessionData: LoLLobbyTeamBuilder.ChampSelect.Session | null, newSessionData: LoLLobbyTeamBuilder.ChampSelect.Session | null) => void;
+        "champ-select-phase-change": (previousPhase: LoLLobbyTeamBuilder.ChampSelect.Phase, phase: LoLLobbyTeamBuilder.ChampSelect.Phase) => void;
+        "champ-select-local-player-ban": () => void;
+        "champ-select-local-player-pick": () => void;
+        "champ-select-local-player-pick-completed": (championKey: string) => void;
+        "rune-pages-updated": () => void;
+        "gameflow-session-update": (oldSessionData: Hasagi.LoLGameflow.SessionData | null, newSessionData: Hasagi.LoLGameflow.SessionData | null) => void;
+        "gameflow-session-phase-update": (prevPhase: Hasagi.LoLGameflow.Phase, newPhase: Hasagi.LoLGameflow.Phase) => void;
+        "champ-select-champion-intent-change": (summonerId: number, previousChampionIntent: number, championIntent: number) => void;
+    }
+
+    export type LanguageCode = typeof import("./constants.js")["LANGUAGE_CODES"][number]
+    export type ServerRegion = typeof import("./constants.js")["SERVER_REGIONS"][number]
+
+    export type ImageData = {
+        full: string;
+        sprite: string;
+        group: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+    };
 }

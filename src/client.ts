@@ -30,7 +30,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
 
     /** Some properties may be empty, null or undefined depending on gameFlowSession.phase. Value is null until the client first creates or joins a lobby.
     */
-    public gameflowSession: Hasagi.GameflowSession.SessionData | null = null;
+    public gameflowSession: Hasagi.LoLGameflow.SessionData | null = null;
 
     public runePages: RunePage[] = [];
 
@@ -211,7 +211,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     }
     //#endregion
 
-    public async getGameflowSession(): Promise<Hasagi.GameflowSession.SessionData> {
+    public async getGameflowSession(): Promise<Hasagi.LoLGameflow.SessionData> {
         if (this.httpClient === null)
             throwNotConnectedError();
 
@@ -563,7 +563,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         this.emit("rune-pages-updated");
     }
 
-    public currentQueue: Hasagi.GameflowSession.Queue | null = null;
+    public currentQueue: Hasagi.LoLGameflow.Queue | null = null;
     public currentMapId: number | null = null;
 
     private onGameflowSessionUpdate(eventType: string, data: any) {
@@ -619,7 +619,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
             ChampSelectV1: {
                 Session: {
                     path: "/lol-lobby-team-builder/champ-select/v1/session",
-                    async get(): Promise<Hasagi.ChampSelect.Session> {
+                    async get(): Promise<Hasagi.LoLLobbyTeamBuilder.ChampSelect.Session> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
@@ -989,7 +989,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
             },
             GameflowPhase: {
                 path: "/lol-gameflow/v1/gameflow-phase",
-                async get(): Promise<Hasagi.GameflowSession.Phase> {
+                async get(): Promise<Hasagi.LoLGameflow.Phase> {
                     if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
@@ -998,7 +998,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
             },
             Session: {
                 path: "/lol-gameflow/v1/session",
-                async get(): Promise<Hasagi.GameflowSession.SessionData> {
+                async get(): Promise<Hasagi.LoLGameflow.SessionData> {
                     if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
@@ -1066,7 +1066,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         RankedV1: {
             CurrentRankedStats: {
                 path: "/lol-ranked/v1/current-ranked-stats",
-                async get(): Promise<Hasagi.CurrentRankData> {
+                async get(): Promise<Hasagi.LoLRanked.CurrentRankData> {
                     if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
@@ -1081,7 +1081,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                     if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.Summoner);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLSummoner.Summoner);
                 },
                 Icon: {
                     path: "/lol-summoner/v1/current-summoner/icon",
@@ -1100,7 +1100,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.getPath(id)).then(res => res.data as Hasagi.Summoner);
+                        return await HasagiClient.Instance!.httpClient.get(this.getPath(id)).then(res => res.data as Hasagi.LoLSummoner.Summoner);
                     }
                 }
             }
@@ -1147,7 +1147,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                             if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoadoutEntry[]);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLLoadout.LoadoutEntry[]);
                         }
                     }
                 }
@@ -1193,7 +1193,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                             if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await HasagiClient.Instance!.httpClient.get(this.getPath(summonerId)).then(res => res.data as Hasagi.LoLChampionsV1.SkinMinimal[]);
+                            return await HasagiClient.Instance!.httpClient.get(this.getPath(summonerId)).then(res => res.data as Hasagi.LoLChampions.SkinMinimal[]);
                         }
                     }
                 }
@@ -1204,7 +1204,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                     if (HasagiClient.Instance!.httpClient === null)
                         throwNotConnectedError();
 
-                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLChampionsV1.ChampionMinimal[]);
+                    return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLChampions.ChampionMinimal[]);
                 }
             }
         },

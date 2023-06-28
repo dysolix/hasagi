@@ -1,10 +1,10 @@
 import { Hasagi } from "../types.js";
 
-export default class ChampSelectSession implements Hasagi.ChampSelect.Session {
+export default class ChampSelectSession implements Hasagi.LoLLobbyTeamBuilder.ChampSelect.Session {
     ownBanActionId: number;
     ownPickActionId: number;
     inProgressActionIds: number[];
-    actions: Hasagi.ChampSelect.Action[][];
+    actions: Hasagi.LoLLobbyTeamBuilder.ChampSelect.Action[][];
     allowBattleBoost: boolean;
     allowDuplicatePicks: boolean;
     allowLockedEvents: boolean;
@@ -22,15 +22,15 @@ export default class ChampSelectSession implements Hasagi.ChampSelect.Session {
     isSpectating: boolean;
     localPlayerCellId: number;
     lockedEventIndex: number;
-    myTeam: Hasagi.ChampSelect.TeamMember[];
+    myTeam: Hasagi.LoLLobbyTeamBuilder.ChampSelect.TeamMember[];
     recoveryCounter: number;
     rerollsRemaining: number;
     skipChampionSelect: boolean;
-    theirTeam: Hasagi.ChampSelect.TeamMember[];
+    theirTeam: Hasagi.LoLLobbyTeamBuilder.ChampSelect.TeamMember[];
     timer: { adjustedTimeLeftInPhase: number; internalNowInEpochMs: number; isInfinite: true; phase: string; totalTimeInPhase: number; };
     trades: { cellId: number; id: number; state: string; }[];
 
-    constructor(data: Hasagi.ChampSelect.Session) {
+    constructor(data: Hasagi.LoLLobbyTeamBuilder.ChampSelect.Session) {
         this.ownBanActionId = -1;
         this.ownPickActionId = -1;
         this.inProgressActionIds = [];
@@ -99,7 +99,7 @@ export default class ChampSelectSession implements Hasagi.ChampSelect.Session {
         return banned;
     }
 
-    getPhase(): Hasagi.ChampSelect.Phase {
+    getPhase(): Hasagi.LoLLobbyTeamBuilder.ChampSelect.Phase {
         return this.timer.phase as any;
     }
 
