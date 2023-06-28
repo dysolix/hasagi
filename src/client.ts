@@ -6,6 +6,7 @@ import RunePage from "./Classes/RunePage.js";
 import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
 import find from "find-process";
+import { Hasagi } from "./types.js";
 
 export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     public static Instance: HasagiClient | null = null;
@@ -33,12 +34,12 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
 
     public runePages: RunePage[] = [];
 
-    private autoReconnect: boolean;
+    public autoReconnect: boolean;
 
     /**
      * @param autoReconnect Determines if the client should automatically try to reconnect if the connection closes. Defaults to true.
      */
-    constructor(autoReconnect = true) {
+    private constructor(autoReconnect = true) {
         super();
 
         this.autoReconnect = autoReconnect;
@@ -49,7 +50,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     /**
      * Asynchronously connects to the League of Legends client
      */
-    async connect() {
+    public async connect() {
         if (this.isConnected) return;
 
         this.webSocket = null;
@@ -112,13 +113,18 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         }, err => { }) // Throws expected exception if gameFlowSession is not yet initialized in the League of Legends client.
                     ]);
 
-                    this.subscribeEvent("OnJsonApiEvent");
+                    this.subscribeWebSocketEvent("OnJsonApiEvent");
                     this.isConnected = true;
                     this.emit("connection-state-change", true);
                 })
             }
             ws.onclose = async (ev: any) => {
                 this.isConnected = false;
+                this.webSocket = null;
+                this.port = null;
+                this.basicAuthToken = null;
+                this.httpClient = null;
+
                 this.emit("connection-state-change", false);
 
                 await delay(2500);
@@ -143,15 +149,17 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         });
     }
 
-    /** For internal use only */
-    private subscribeEvent(eventName: string) {
+    public disconnect() {
+        this.webSocket?.close();
+    }
+
+    private subscribeWebSocketEvent(eventName: string) {
         if (this.webSocket !== null && this.webSocket.readyState === 1) {
             this.webSocket.send(JSON.stringify([5, eventName]));
         }
     }
 
-    /** For internal use only */
-    private unsubscribeEvent(eventName: string) {
+    private unsubscribeWebSocketEvent(eventName: string) {
         if (this.webSocket !== null && this.webSocket.readyState === 1) {
             this.webSocket.send(JSON.stringify([6, eventName]));
         }

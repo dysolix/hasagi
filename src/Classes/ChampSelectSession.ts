@@ -1,3 +1,5 @@
+import { Hasagi } from "../types.js";
+
 export default class ChampSelectSession implements Hasagi.ChampSelect.Session {
     ownBanActionId: number;
     ownPickActionId: number;

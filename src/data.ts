@@ -1,6 +1,7 @@
 import { AxiosError } from "axios";
 import { httpGet, isPatchNewerOrEqual } from "./util.js";
 import { GAME_MODES, GAME_TYPES, MAPS, QUEUES, LAST_UPDATED as GAME_CONSTANTS_LAST_UPDATED } from "./game-constants.js";
+import { Hasagi } from "./index.js";
 
 var DataDragonDataStorage: Hasagi.DataDragon.DataStorage = {}
 

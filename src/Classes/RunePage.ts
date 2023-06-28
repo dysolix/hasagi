@@ -1,4 +1,5 @@
 import { HasagiClient, DataDragon } from "../index.js";
+import { Hasagi } from "../types.js";
 
 export default class RunePage implements Hasagi.RunePage {
     autoModifiedSelections: any[];
