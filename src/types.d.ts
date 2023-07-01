@@ -1,3 +1,6 @@
+import RunePage from "./Classes/RunePage.js";
+import { SERVER_REGIONS, LANGUAGE_CODES } from "./constants.js";
+
 export namespace Hasagi {
     export namespace DataDragon {
         export type Champion = {
@@ -204,7 +207,7 @@ export namespace Hasagi {
     }
 
     export namespace LiveClientAPI {
-        export type LiveClientActivePlayerAbilities = {
+        export type LocalPlayerAbilities = {
             Passive: LiveClientPassiveAbility,
             Q: LiveClientAbility,
             W: LiveClientAbility,
@@ -212,16 +215,16 @@ export namespace Hasagi {
             R: LiveClientAbility,
         }
 
-        export type LiveClientActivePlayer = {
-            abilities: LiveClientActivePlayerAbilities;
+        export type LocalPlayer = {
+            abilities: LocalPlayerAbilities;
             championStats: LiveClientChampionStats;
             currentGold: number;
-            fullRunes: LiveClientActivePlayerRunes;
+            fullRunes: LocalPlayerRunes;
             level: number;
             summonerName: string;
         }
 
-        export type LiveClientActivePlayerRunes = {
+        export type LocalPlayerRunes = {
             keystone: LiveClientKeystone;
             primaryRuneTree: LiveClientRuneTree;
             secondaryRuneTree: LiveClientRuneTree;
@@ -281,7 +284,7 @@ export namespace Hasagi {
             rawDisplayName: string;
         }
 
-        export type LiveClientGameData = {
+        export type GameStats = {
             gameMode: string;
             gameTime: number;
             mapName: string;
@@ -289,35 +292,35 @@ export namespace Hasagi {
             mapTerrain: string;
         }
 
-        export type LiveClientPlayer = {
+        export type Player = {
             championName: string;
             isBot: boolean;
             isDead: boolean;
-            items: LiveClientPlayerItem[];
+            items: PlayerItem[];
             level: number;
             position: string;
             rawChampionName: string;
             respawnTimer: number;
-            runes: LiveClientMainRunes;
-            scores: LiveClientScore;
+            runes: PlayerMainRunes;
+            scores: PlayerScores;
             skinID: number;
             summonerName: string;
-            summonerSpells: LiveClientSummonerSpells;
+            summonerSpells: PlayerSummonerSpells;
             team: string;
         }
 
-        export type LiveClientMainRunes = {
+        export type PlayerMainRunes = {
             keystone: LiveClientKeystone;
             primaryRuneTree: LiveClientRuneTree;
             secondaryRuneTree: LiveClientRuneTree;
         }
 
-        export type LiveClientSummonerSpells = {
+        export type PlayerSummonerSpells = {
             summonerSpellOne: LiveClientSummonerSpell;
             summonerSpellTwo: LiveClientSummonerSpell;
         }
 
-        export type LiveClientPlayerItem = {
+        export type PlayerItem = {
             canUse: boolean;
             consumable: boolean;
             count: number;
@@ -344,7 +347,7 @@ export namespace Hasagi {
             rawDisplayName: string;
         }
 
-        export type LiveClientScore = {
+        export type PlayerScores = {
             assists: number;
             creepScore: number;
             deaths: number;
@@ -358,16 +361,16 @@ export namespace Hasagi {
             rawDisplayName: string;
         }
 
-        export type LiveClientData = {
-            activePlayer: LiveClientActivePlayer,
-            allPlayers: LiveClientPlayer[],
+        export type AllGameData = {
+            activePlayer: LocalPlayer,
+            allPlayers: Player[],
             events: {
-                Events: LiveClientEvent[]
+                Events: Event[]
             },
-            gameData: LiveClientGameData
+            gameData: GameStats
         }
 
-        export type LiveClientEvent = LiveClientGameStartEvent | LiveClientMinionsSpawningEvent | LiveClientFirstBrickEvent | LiveClientTurretKilledEvent | LiveClientInhibKilledEvent | LiveClientDragonKillEvent | LiveClientHeraldKillEvent | LiveClientBaronKillEvent | LiveClientChampionKillEvent | LiveClientMultikillEvent | LiveClientAceEvent | LiveClientEventBase & { EventName: string, [key: string]: string | number }
+        export type Event = LiveClientGameStartEvent | LiveClientMinionsSpawningEvent | LiveClientFirstBrickEvent | LiveClientTurretKilledEvent | LiveClientInhibKilledEvent | LiveClientDragonKillEvent | LiveClientHeraldKillEvent | LiveClientBaronKillEvent | LiveClientChampionKillEvent | LiveClientMultikillEvent | LiveClientAceEvent | LiveClientEventBase & { EventName: string, [key: string]: string | number }
 
         export type LiveClientEventBase = {
             EventID: number;
@@ -1002,20 +1005,24 @@ export namespace Hasagi {
 
     export interface ClientEvents {
         "connection-state-change": (state: boolean) => void;
-        "lcu-event": (event: [opcode: number, name: string, data: { eventType: string; uri: string; data: any; }]) => void;
+
+        "lcu-event": (name: string, data: { eventType: string; uri: string; data: any; }) => void;
+
         "champ-select-session-update": (oldSessionData: LoLLobbyTeamBuilder.ChampSelect.Session | null, newSessionData: LoLLobbyTeamBuilder.ChampSelect.Session | null) => void;
         "champ-select-phase-change": (previousPhase: LoLLobbyTeamBuilder.ChampSelect.Phase, phase: LoLLobbyTeamBuilder.ChampSelect.Phase) => void;
-        "champ-select-local-player-ban": () => void;
-        "champ-select-local-player-pick": () => void;
+        "champ-select-local-player-ban": (actionId: number) => void;
+        "champ-select-local-player-pick": (actionId: number) => void;
         "champ-select-local-player-pick-completed": (championKey: string) => void;
-        "rune-pages-updated": () => void;
+        "champ-select-champion-intent-change": (summonerId: number, previousChampionIntent: number, championIntent: number) => void;
+
+        "rune-pages-updated": (previousRunePages: RunePage[] | null, runePages: RunePage[]) => void;
+
         "gameflow-session-update": (oldSessionData: Hasagi.LoLGameflow.SessionData | null, newSessionData: Hasagi.LoLGameflow.SessionData | null) => void;
         "gameflow-session-phase-update": (prevPhase: Hasagi.LoLGameflow.Phase, newPhase: Hasagi.LoLGameflow.Phase) => void;
-        "champ-select-champion-intent-change": (summonerId: number, previousChampionIntent: number, championIntent: number) => void;
     }
 
-    export type LanguageCode = typeof import("./constants.js")["LANGUAGE_CODES"][number]
-    export type ServerRegion = typeof import("./constants.js")["SERVER_REGIONS"][number]
+    export type LanguageCode = typeof LANGUAGE_CODES[number];
+    export type ServerRegion = typeof SERVER_REGIONS[number];
 
     export type ImageData = {
         full: string;

@@ -19,3 +19,4 @@ Hasagi Library Changelog
 (0.3.7) HasagiClient's constructor is public again
 (0.3.8) Fixed missing types
 (0.3.9) Finished reorganization of types
+(0.3.10) Added regionLocale property to HasagiClient

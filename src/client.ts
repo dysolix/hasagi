@@ -1,12 +1,13 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import { Agent } from "https";
-import { TypedEmitter } from "tiny-typed-emitter";
+import { DefaultListener, TypedEmitter } from "tiny-typed-emitter";
 import ChampSelectSession from "./Classes/ChampSelectSession.js";
 import RunePage from "./Classes/RunePage.js";
 import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
 import find from "find-process";
 import type { Hasagi } from "./types";
+import EventEmitter from "events";
 
 export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     public static Instance: HasagiClient | null = null;
@@ -36,6 +37,8 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
 
     public autoReconnect: boolean;
 
+    public regionLocale: Hasagi.RiotClient.RegionLocale | null = null;
+
     /**
      * @param autoReconnect Determines if the client should automatically try to reconnect if the connection closes. Defaults to true.
      */
@@ -57,6 +60,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         this.port = null;
         this.basicAuthToken = null;
         this.httpClient = null;
+        this.regionLocale = null;
 
         await new Promise(
             (resolve, reject) => {
@@ -104,13 +108,16 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                     await Promise.allSettled([
                         this.getRunePagesFromClient().then(runePages => {
                             this.runePages = runePages;
-                            this.emit("rune-pages-updated");
+                            this.emit("rune-pages-updated", null, this.runePages);
                         }),
-                        this.getGameflowSession().then(gameflowSession => {
+                        this.LCUEndpoints.GameflowV1.Session.get().then(gameflowSession => {
                             const oldGameflowSession = this.gameflowSession;
                             this.gameflowSession = gameflowSession
                             this.emit("gameflow-session-update", oldGameflowSession, this.gameflowSession)
-                        }, err => { }) // Throws expected exception if gameFlowSession is not yet initialized in the League of Legends client.
+                        }, err => { }), // Throws expected exception if gameFlowSession is not yet initialized in the League of Legends client.
+                        this.LCUEndpoints.RiotClient.GetRegionLocale.get().then(regionLocale => {
+                            this.regionLocale = regionLocale;
+                        }, err => { })
                     ]);
 
                     this.subscribeWebSocketEvent("OnJsonApiEvent");
@@ -124,6 +131,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 this.port = null;
                 this.basicAuthToken = null;
                 this.httpClient = null;
+                this.regionLocale = null;
 
                 this.emit("connection-state-change", false);
 
@@ -207,16 +215,9 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
 
         }
 
-        this.emit("lcu-event", event);
+        this.emit("lcu-event", event[1], event[2]);
     }
     //#endregion
-
-    public async getGameflowSession(): Promise<Hasagi.LoLGameflow.SessionData> {
-        if (this.httpClient === null)
-            throwNotConnectedError();
-
-        return this.LCUEndpoints.GameflowV1.Session.get();
-    }
 
     //#region Ready Check
     /**
@@ -371,21 +372,21 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     //#region Live Client Data
 
     /**
-     * @param timeout Timeout in milliseconds; defaults to 15 seconds
-     * @returns true, when live client data is available
+     * @param timeout Timeout in milliseconds; defaults to 30 seconds
+     * @throws {Error} if Live Client Data is not available after the timeout duration
      */
-    async waitForLiveClientAvailability(timeout = 15000) {
+    async waitForLiveClientAvailability(timeout = 30000) {
         let elapsedTime = 0;
         while (elapsedTime < timeout) {
             let summonerName = await this.getLiveClientActivePlayerSummonerName();
             if (summonerName !== null)
-                return true;
+                return;
 
             await delay(1000);
             elapsedTime += 1000;
         }
 
-        return false;
+        throw new Error("Live Client Data is not available.");
     }
 
     async getLiveClientActivePlayerSummonerName() {
@@ -397,7 +398,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientData(): Promise<Hasagi.LiveClientAPI.LiveClientData | null> {
+    async getLiveClientData(): Promise<Hasagi.LiveClientAPI.AllGameData | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/allgamedata").then(res => res.data)
         } catch {
@@ -406,7 +407,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientActivePlayer(): Promise<Hasagi.LiveClientAPI.LiveClientActivePlayer | null> {
+    async getLiveClientActivePlayer(): Promise<Hasagi.LiveClientAPI.LocalPlayer | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/activeplayer").then(res => res.data)
         } catch {
@@ -415,7 +416,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientActivePlayerAbilities(): Promise<Hasagi.LiveClientAPI.LiveClientActivePlayerAbilities | null> {
+    async getLiveClientActivePlayerAbilities(): Promise<Hasagi.LiveClientAPI.LocalPlayerAbilities | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/activeplayerabilities").then(res => res.data)
         } catch {
@@ -424,7 +425,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientActivePlayerRunes(): Promise<Hasagi.LiveClientAPI.LiveClientActivePlayerRunes | null> {
+    async getLiveClientActivePlayerRunes(): Promise<Hasagi.LiveClientAPI.LocalPlayerRunes | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/activeplayerrunes").then(res => res.data)
         } catch {
@@ -433,7 +434,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientPlayerList(): Promise<Hasagi.LiveClientAPI.LiveClientPlayer[] | null> {
+    async getLiveClientPlayerList(): Promise<Hasagi.LiveClientAPI.Player[] | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/playerlist").then(res => res.data)
         } catch {
@@ -442,7 +443,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientPlayerScore(summonerName: string): Promise<Hasagi.LiveClientAPI.LiveClientScore | null> {
+    async getLiveClientPlayerScore(summonerName: string): Promise<Hasagi.LiveClientAPI.PlayerScores | null> {
         try {
             return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playerscores?summonerName=" + summonerName)).then(res => res.data)
         } catch {
@@ -451,7 +452,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientPlayerSummonerSpells(summonerName: string): Promise<Hasagi.LiveClientAPI.LiveClientSummonerSpells | null> {
+    async getLiveClientPlayerSummonerSpells(summonerName: string): Promise<Hasagi.LiveClientAPI.PlayerSummonerSpells | null> {
         try {
             return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playersummonerspells?summonerName=" + summonerName)).then(res => res.data)
         } catch {
@@ -460,7 +461,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientPlayerMainRunes(summonerName: string): Promise<Hasagi.LiveClientAPI.LiveClientMainRunes | null> {
+    async getLiveClientPlayerMainRunes(summonerName: string): Promise<Hasagi.LiveClientAPI.PlayerMainRunes | null> {
         try {
             return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playermainrunes?summonerName=" + summonerName)).then(res => res.data)
         } catch {
@@ -469,7 +470,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientPlayerItems(summonerName: string): Promise<Hasagi.LiveClientAPI.LiveClientPlayerItem[] | null> {
+    async getLiveClientPlayerItems(summonerName: string): Promise<Hasagi.LiveClientAPI.PlayerItem[] | null> {
         try {
             return await this.liveClientDataHttpClient.get(encodeURI("/liveclientdata/playeritems?summonerName=" + summonerName)).then(res => res.data)
         } catch {
@@ -478,7 +479,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientEvents(): Promise<{ Events: Hasagi.LiveClientAPI.LiveClientEvent[] } | null> {
+    async getLiveClientEvents(): Promise<{ Events: Hasagi.LiveClientAPI.Event[] } | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/eventdata").then(res => res.data)
         } catch {
@@ -487,7 +488,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         }
     }
 
-    async getLiveClientGameStats(): Promise<Hasagi.LiveClientAPI.LiveClientGameData | null> {
+    async getLiveClientGameStats(): Promise<Hasagi.LiveClientAPI.GameStats | null> {
         try {
             return await this.liveClientDataHttpClient.get("/liveclientdata/gamestats").then(res => res.data)
         } catch {
@@ -517,10 +518,10 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                 this.emit("champ-select-phase-change", oldSessionData.getPhase(), newSessionData.getPhase());
             }
             if (newSessionData.isBanPhase() && oldSessionData.getPhase() === "PLANNING") {
-                this.emit("champ-select-local-player-ban");
+                this.emit("champ-select-local-player-ban", newSessionData.ownBanActionId);
             }
             if (newSessionData.inProgressActionIds.includes(newSessionData.ownPickActionId) && !oldSessionData.inProgressActionIds.includes(newSessionData.ownPickActionId)) {
-                this.emit("champ-select-local-player-pick")
+                this.emit("champ-select-local-player-pick", newSessionData.ownPickActionId)
             }
 
             //TODO PICK INTENT CHANGE
@@ -548,19 +549,21 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     private onPerksPagesUpdate(eventType: string, data: any) {
         if (eventType === "Update") {
             let runes: any[] = data;
-            this.runePages = runes.map(rune => new RunePage(rune));
-            this.emit("rune-pages-updated");
+            const oldRunes = this.runePages;
+            this.runePages = runes.map(runePage => new RunePage(runePage));
+            this.emit("rune-pages-updated", oldRunes, this.runePages);
         }
     }
 
     private onPerksCurrentPageUpdate(eventType: string, data: any) {
+        const oldRunes = this.runePages.map(runePage => new RunePage({ ...runePage }))
         let updatedRunePage = data;
         let index = this.runePages.findIndex(rp => rp.id === updatedRunePage.id);
         let currentIndex = this.runePages.findIndex(rp => rp.current);
         if (currentIndex !== -1) this.runePages[currentIndex].current = false;
         if (index === -1) return;
-        this.runePages[index] = updatedRunePage;
-        this.emit("rune-pages-updated");
+        this.runePages[index] = new RunePage(updatedRunePage);
+        this.emit("rune-pages-updated", oldRunes, this.runePages);
     }
 
     public currentQueue: Hasagi.LoLGameflow.Queue | null = null;
@@ -631,7 +634,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                             if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLLobbyTeamBuilder.ChampSelect.Session["timer"]);
                         }
                     },
                     Trades: {
@@ -640,7 +643,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                             if (HasagiClient.Instance!.httpClient === null)
                                 throwNotConnectedError();
 
-                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                            return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLLobbyTeamBuilder.ChampSelect.Session["trades"]);
                         },
                     },
                     TradesWithId: {
@@ -659,7 +662,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as number[]);
                     }
                 },
                 CurrentChampion: {
@@ -668,7 +671,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as number);
                     }
                 },
                 DisabledChampionIds: {
@@ -677,7 +680,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as number[]);
                     }
                 },
                 HasAutoAssignedSmite: {
@@ -686,7 +689,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as boolean);
                     }
                 },
                 ImplementationActive: {
@@ -695,7 +698,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as boolean);
                     }
                 },
                 MatchToken: {
@@ -704,7 +707,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as string);
                     }
                 },
                 PickableChampionIds: {
@@ -713,7 +716,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as number[]);
                     }
                 },
                 PickableSkinIds: {
@@ -722,7 +725,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as number[]);
                     }
                 },
                 Preferences: {
@@ -740,7 +743,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as boolean);
                     }
                 },
                 TeamBoost: {
@@ -758,7 +761,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
                         if (HasagiClient.Instance!.httpClient === null)
                             throwNotConnectedError();
 
-                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data);
+                        return await HasagiClient.Instance!.httpClient.get(this.path).then(res => res.data as Hasagi.LoLMatchmaking.MatchmakingData);
                     }
                 }
             }
@@ -1229,5 +1232,12 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
             throwNotConnectedError();
 
         return this.httpClient.request<ResponseDataType, ResponseType, BodyType>(config);
+    }
+
+    /**
+     * Send a request to the Live Client Data API. The base url is already set. Only works when ingame.
+     */
+    requestLiveClient<ResponseDataType = any, ResponseType = AxiosResponse<ResponseDataType, any>, BodyType = any>(config: AxiosRequestConfig<BodyType>) {
+        return this.liveClientDataHttpClient.request<ResponseDataType, ResponseType, BodyType>(config);
     }
 }

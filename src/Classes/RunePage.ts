@@ -34,10 +34,10 @@ export default class RunePage implements Hasagi.LoLPerks.RunePage {
 
     /**
      * 
-     * @param primaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
-     * @param secondaryRuneTree If not provided, an attempt will be made to get the value from 'Data'
+     * @param primaryRuneTree If not provided, an attempt will be made to get the value from 'DataDragon'. This will only work if you loaded runes and set a default patch.
+     * @param secondaryRuneTree If not provided, an attempt will be made to get the value from 'DataDragon'  This will only work if you loaded runes and set a default patch.
      */
-    public static async Create(name: string, runes: number[], primaryRuneTree?: Hasagi.DataDragon.RuneTree | number, secondaryRuneTree?: Hasagi.DataDragon.RuneTree | number) {
+    public static Create(name: string, runes: number[], primaryRuneTree?: Hasagi.DataDragon.RuneTree | number, secondaryRuneTree?: Hasagi.DataDragon.RuneTree | number) {
         if (primaryRuneTree === undefined) {
             try {
                 const primaryTreeId = DataDragon.getRuneTreeByRune(runes[0])?.id;
