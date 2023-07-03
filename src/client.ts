@@ -7,7 +7,7 @@ import { WebSocket } from "ws";
 import { delay, throwCurrentlyNotPossibleError, throwNotConnectedError } from "./util.js";
 import find from "find-process";
 import type { Hasagi } from "./types";
-import EventEmitter from "events";
+import fs from "fs/promises";
 
 export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
     public static Instance: HasagiClient | null = null;
@@ -62,27 +62,7 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
         this.httpClient = null;
         this.regionLocale = null;
 
-        await new Promise(
-            (resolve, reject) => {
-                find("name", "LeagueClientUx.exe").then(res => {
-                    const process = res[0];
-                    if (!process) {
-                        reject();
-                        return;
-                    }
-
-                    const args = process.cmd;
-                    let portArr = args.match("--app-port=([0-9]*)");
-                    let passArr = args.match("--remoting-auth-token=([\\w-]*)");
-
-                    if (portArr !== null && passArr !== null && (portArr?.length ?? 0) === 2 && (passArr?.length ?? 0) === 2) {
-                        resolve({ port: Number(portArr[1]), authToken: String(passArr[1]) });
-                    } else {
-                        reject();
-                    }
-                })
-            }
-        ).then((data: any) => {
+        await this.getPortAndBasicAuthToken().then((data: any) => {
             let port = data.port;
             let authToken = Buffer.from(("riot:" + data.authToken)).toString("base64");
 
@@ -159,6 +139,55 @@ export default class HasagiClient extends TypedEmitter<Hasagi.ClientEvents> {
 
     public disconnect() {
         this.webSocket?.close();
+    }
+
+    /**
+     * @param lockfile Required if source="lockfile". Can either be the path to the lockfile or it's content.
+     */
+    private async getPortAndBasicAuthToken(source: "process" | "lockfile" = "process", lockfile?: string) {
+        if (source === "process") {
+            const res = await find("name", "LeagueClientUx", true);
+            const process = res[0];
+            if (!process) {
+                throw new Error("Unable to find process 'LeagueClientUx'.");
+            }
+
+            const args = process.cmd;
+
+            let portArr = args.match("--app-port=([0-9]*)");
+            let passArr = args.match("--remoting-auth-token=([\\w-]*)");
+
+            if (portArr !== null && passArr !== null && (portArr?.length ?? 0) === 2 && (passArr?.length ?? 0) === 2) {
+                return { port: Number(portArr[1]), basicAuthToken: Buffer.from(("riot:" + String(passArr[1]))).toString("base64") };
+            } else {
+                throw new Error("Found process 'LeagueClientUx', but could not retrieve port and auth token.");
+            }
+        } else {
+            if (typeof lockfile !== "string")
+                throw new Error("Parameter 'lockfile' not provided or has an invalid type.");
+
+            try {
+                return this.getPortAndBasicAuthTokenFromLockfile(lockfile);
+            } catch (e) {
+                const lockfileContent = await fs.readFile(lockfile, "utf8").catch(err => null);
+                if(!lockfileContent)
+                    throw new Error("Parameter 'lockfile' is not a valid path or lockfile content.");
+
+                return this.getPortAndBasicAuthTokenFromLockfile(lockfileContent)
+            }
+        }
+    }
+
+    private getPortAndBasicAuthTokenFromLockfile(lockfileContent: string) {
+        const lockfileArr = lockfileContent.split(":");
+        const port = lockfileArr[2];
+        const password = lockfileArr[3];
+
+        if (port && password) {
+            return { port: Number(port), basicAuthToken: Buffer.from(("riot:" + password)).toString("base64") };
+        }
+
+        throw new Error("Could not retrieve port and auth token from lockfile.");
     }
 
     private subscribeWebSocketEvent(eventName: string) {

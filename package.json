@@ -21,7 +21,7 @@
     "url": "git+https://github.com/dysolix/hasagi.git"
   },
   "author": "dysolix <contact@dysolix.dev>",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/dysolix/hasagi/issues",
     "email": "hasagi@dysolix.dev"
